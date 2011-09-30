@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulated Hard Disk</h2>
+A single hard disk is emulated through a disk image file.  An image file can be as
+large as 71 MB.  If one of the following file sizes is used, the emulator will
+auto-detect the emulated disk geometry (heads, cylinders, sectors).
+
+    Filesize  Heads  Cylinders  Sectors  Disk type
+    --------  -----  ---------  -------  ---------
+   5,013,504      4        153       16   RD50  5M
+   5,326,848      4        153       17   RD50  5M
+  10,027,008      4        306       16   RD51 10M
+  10,653,696      4        306       17   RD51 10M
+  20,152,320      4        615       16   RD31 21M
+  21,411,840      4        615       17   RD31 21M
+  33,554,432      8        512       16   RD52 36M
+  35,651,584      8        512       17   RD52 36M
+  40,304,640      6        820       16   RD32 43M
+  42,823,680      6        820       17   RD32 43M
+  67,108,864      8       1024       16   RD53 71M
+  71,303,168      8       1024       17   RD53 71M
+
+Other sizes may be used, but the disk geometry will have to be specified manually.
+The sector size is 512 bytes, so the following equation applies:
+
+  file_size = heads * cylinders * sectors * 512
+
+Set the path to the directory that contains the hard disk image file with the "rd_dir"
+variable in the configuration file.  Specify the disk image file to be used with the
+"rd0" variable.  For example, to use the provided Venix 2.0 disk image, from the
+current directory, put the following in the configuration file:
+
+  rd_dir = .
+  rd0 = venix2.rd
+
+As an example, to create a custom 6,144,000 byte image by the name of "image.rd," 
+perform the following from a Linux shell prompt:
+
+  dd if=/dev/zero of=image.rd bs=6144000 count=1
+
+Then, to attach it to the emulator, as a disk with 6 heads, 200 cylinders and 10
+sectors, specify the following in the configuration file:
+
+  rd0 = image.rd, 6, 200, 10
+
+Additionally, since this newly-created image is blank,  it would make sense to
+specify a bootable floppy image to boot from (see the "Emulated Floppy Drives"
+section).
+
+If no configuration file is present, or if no hard disk image is specified, the
+emulator will attempt to use a file by the name of "pos32.rd" in the current
+directory.
+
+All real hard drives used by the Pro seem to have 17 sectors.  However, neither P/OS
+nor Venix seems to access the 17th sector.  To save disk space, the 16-sector formats
+specified in the table may be used.
+</pre>
+</body>
+</HTML>

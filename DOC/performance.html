@@ -1,0 +1,47 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Performance</h2>
+The original Pro ran at a speed of probably not much more than about 0.3 MIPS.  The
+emulated speed varies, according to the activity being performed.  I've seen speeds
+in the range of 1 MIPS (heavy screen scrolling in windowed mode) to 5 MIPS (sitting
+idle in P/OS), on an 866 MHz Pentium-III machine running Red Hat Linux 8.0.
+
+Xhomer is based on the J11 processor core from the SIMH simulator.  Profiling
+various operating systems running on this core (with gprof) showed that the
+simulator was spending a significant portion of its time performing virtual to
+physical address translations.  In Xhomer, this translation function has been
+accelerated through the use of a small cache (effectively a simple TLB), resulting
+in about a 10% overall performance boost.
+
+Following are performance benchmarks from various different host machines.  These
+numbers were measured with Xhomer sitting idle at the P/OS main menu screen.
+
+                                                                            Performance
+Machine                 Processor           O/S             Compiler        (TIPS)
+-------                 ---------           ---             --------        -----------
+Dell Precision 370      P4-P 3.6 GHz        Linux 2.4.18    gcc 3.2         19,300
+Dell PowerEdge 400SC    P4-N 2.26 GHz       Linux 2.4.24    gcc 3.2         11,000
+IBM Thinkpad T41        PM-B 1.4 GHz        Linux 2.4.21    gcc 3.3.1        8,400
+Apple PowerBook G4      PowerPC G4 1 GHz    Mac OS 10.3.3   gcc 3.3          4,400
+Intel OR840             P3-C 666 MHz        Linux 2.4.21    gcc 3.3.1        3,700
+Intel VS440FX           PPRO 150 MHz        Linux 2.2.19    gcc 3.2            800
+WebPal                  ARM 710 40 MHz      Linux 2.4.18    gcc 2.95.2          30
+
+Abbreviations:
+
+P4-P: Pentium 4 "Prescott"
+P4-N: Pentium 4 "Northwood"
+P3-C: Pentium III "Coppermine"
+PPRO: Pentium Pro
+PM-B: Pentium M "Banias"
+</pre>
+</body>
+</HTML>

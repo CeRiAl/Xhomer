@@ -1,0 +1,43 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Building Xhomer</h2>
+Download and untar the source tarball and enter the xhomer-(version) directory.  If
+building on a Linux system, the following should be sufficient:
+
+  1. make clean
+
+  2. make
+
+     This builds the dynamically-linked executable (xhomer).
+
+  3. (optional) make xhomer.static
+
+     This builds the statically-linked executable (xhomer.static).
+
+  4. (optional) setuid_root_xhomer
+
+     You will be prompted for your root password.  This gives root privileges to
+     any Xhomer binaries that were just built.  This is necessary if you would like
+     to run Xhomer in full-screen mode (DGA) and possibly to access certain
+     peripherals (such as serial and printer ports), depending on how the privileges
+     on your system are set.  Otherwise, this step is not needed.
+
+The Makefile is written for gnu make (gmake) and assumes the presence of gcc.  If
+building on a Unix or Unix-like system, other than Linux, minor tweaks to this file
+might be necessary, although the Makefile has been known to work on HP-UX and Solaris
+(with gcc and gmake installed) without modification.
+
+The Makefile attempts to auto-detect the presence of DGA1 and DGA2 on the build
+system.  In case this auto-detection causes problems, it may be overidden.  Please
+see the Makefile itself for details.
+</pre>
+</body>
+</HTML>

@@ -1,0 +1,14 @@
+#!/bin/sh
+PRO_VERSION=`cat VERSION`
+TMP_DIR=/tmp/XHOMER_ARCHIVE_TMP
+
+rm -rf $TMP_DIR >& /dev/null
+mkdir $TMP_DIR
+mkdir $TMP_DIR/xhomer-$PRO_VERSION
+cp -av * $TMP_DIR/xhomer-$PRO_VERSION
+tar cvfz ../xhomer-$PRO_VERSION.tgz -C $TMP_DIR xhomer-$PRO_VERSION
+rm -rf $TMP_DIR >& /dev/null
+
+echo ""
+echo "Created ../xhomer-$PRO_VERSION.tgz"
+echo ""

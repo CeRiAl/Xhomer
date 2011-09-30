@@ -1,0 +1,33 @@
+
+<A HREF="pos32.rd.gz">P/OS 3.2 hard disk image</A> (same file as in "Quick Start")
+  (filesize: 3789644 md5sum: a611327714417d9b629cd20e540ce974 - uncompresses to 67 MB)
+  (press return to log in to P/OS)
+
+<A HREF="venix2.rd.gz">Venix 2.0 hard disk image</A>
+  (filesize: 1749690 md5sum: 22d5c154c11cc762f03d609ddbce4d0b - uncompresses to 33 MB)
+  (log in as user "root" for a shell, or as user "demo" to see the graphics demo -
+  neither account has a password)
+
+<A HREF="rt11v53.rd.tgz">RT-11 V5.3 hard disk image</A>
+  (filesize: 1022425 md5sum: ce604ff437514808f820f93d33639167 - uncompresses to 33 MB)
+  (use "gunzip -dc rt11v53.rd.tgz | tar xvf -" to extract the disk image - please
+  read the license files included in this particular archive)
+
+<A HREF="pos32_install_floppies.tgz">P/OS 3.2 installation floppy disk images</A>
+  (filesize: 2955387 md5sum: 25afdae87f37469e9f5cac088fda81dd)
+  (these are only needed to build a new P/OS hard disk image from scratch)
+
+(Caution: Some web browsers might remove the ".gz" extension from the disk image filenames, without
+actually decompressing them.  If this happens, add the ".gz" extension back manually before running
+gunzip.)
+
+<A NAME=feedback>
+<h2>Feedback</h2>
+Feedback, questions, bug reports, patches, etc. are always welcome.  Also, I would be very
+interested in hearing whether anyone is able to run other operating systems (2.9BSD?).
+Please contact me at the address below.
+<hr>                      
+Last updated 9-16-06 by Tarik Isani <img src="contact.gif">
+</pre>
+</body>
+</HTML>

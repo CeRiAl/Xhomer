@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Reading and Writing Real RX50 Floppies</h2>
+The emulator is not able to read and write real RX50 floppies directly.  However, on
+a Linux system, it is possible to convert RX50 floppies to disk image files, and vice
+versa.  A 1.2 MB 5.25" floppy drive is needed for this.  The following entry should
+be added to the /etc/fdprm file on the Linux system that has the floppy drive
+attached:
+
+  #               size sec/t hds trk stre  gap rate spec1 fmt_gap
+  RX50             800    10   1  80    0 0x14 0x01  0xDF    0x18
+
+Then, assuming the 5.25" floppy drive is /dev/fd1, the RX50 parameters should be set
+from a shell prompt (as root) with:
+
+  setfdprm /dev/fd1 RX50
+
+Next, the dd command can be used to read and write RX50 floppies.  For example, to
+convert an entire floppy into an image file:
+
+  dd if=/dev/fd1 of=floppy_image
+
+This should produce a 409,600 byte file.  To write an entire floppy from such a file:
+
+  dd if=floppy_image of=/dev/fd1
+
+I have had very good luck reading Pro floppies this way.  However, for disks that I
+have written, I've had some problems reading the last couple of tracks on a real Pro.
+</pre>
+</body>
+</HTML>

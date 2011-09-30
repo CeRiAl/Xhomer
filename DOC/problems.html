@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Known Problems</h2>
+  -The Synergy window manager often fails to start on P/OS 3.2.  I have not determined
+   the cause.  The workaround is to retry starting it several times.  I find that it
+   generally starts after about 3-4 attempts.  Once started, it appears to be stable,
+   and gives no further problems.
+
+  -Occasionally, the state of the shift or control key in the emulator gets out of
+   sync wih the host system (i.e. the emulator thinks the key is down, when it isn't).
+   This can happen when the X-cursor enters the emulator window, or when switching
+   between windowed and full-screen modes.  The workaround is to press and release
+   ctrl or shift once, when this happens.
+
+  -The system time is incorrect when running Venix, if the date on the host system
+   is set to 1-1-2000, or later.  This is actually not an emulation problem, but a
+   Y2K bug in Venix.  To work around this, the emulated year value may be forced
+   with the "force_year" variable.  Please see the "Emulator Configuration File"
+   section for more information.
+
+  -X-windows problems:
+
+    -Color-indexed graphics modes:
+
+      Support for these modes is not complete in the emulator.  (These are typically
+      8-bit modes).  Windowed mode generally works, but it might be necessary to use
+      a private colormap ("pcm = on") to obtain correct colors.  DGA full-screen mode
+      only seems to work without a private colormap ("pcm = off").
+
+    -24-bit (3 byte per pixel) graphics modes:
+
+      These are not supported.  However, 4 byte per pixel 24-bit modes, which are
+      typically more commonly used, *are* supported.
+
+    -Running on systems other than Linux/x86:
+
+      On some (not all) non-Linux/x86 systems, colors may not be displayed correctly
+      in some display modes.  This problem has been reported on Solaris.
+
+    -DGA full-screen mode:
+
+      DGA support in Xhomer is considered to be somewhat experimental at this point.
+
+      DGA is not fully functional on all X-servers.   If you are seeing a static black
+      screen, or other strange behavior, after switching to full-screen mode, this
+      could be the cause.  This is not necessarily an emulator problem.  Try forcing
+      either DGA1 or DGA2 support in the Makefile.  Also, if you end up in this
+      situation, it may still be possible to exit Xhomer cleanly by pressing ctrl-F1,
+      then pressing the down-arrow key at least 8 times, followed by enter.
+
+      Auto-detection of the number of available frame buffers seems to fail on some
+      X-servers in certain modes.  If the emulator complains about not having enough
+      graphics memory when switching to full-screen mode, try forcing the number of
+      buffers with the "framebuffers" variable.  (A value of 1 is the most likely
+      to work)
+
+      If you are using the #9 I128 X-server, it is recommended that the variable
+      "nine_workaround" be set to "on" in the configuration file.  This works around
+      a number of DGA bugs in this X-server.
+</pre>
+</body>
+</HTML>

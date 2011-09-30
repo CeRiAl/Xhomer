@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Running Xhomer</h2>
+Xhomer reads options from a configuration file at startup.  A sample configuration
+file (xhomer.cfg) is included in the source distribution.  Xhomer first looks for
+its configuration file in ~/.xhomerrc (i.e. in your home directory).  If this file
+is not found, it looks for xhomer.cfg in the current directory.  (The format of
+both files is identical)  Make sure the options in this file are set appropriately.
+Please see the section titled "Emulator Configuration File" for details of this
+file's format.  If neither file is found, a built-in default configuration is used.
+This configuration attempts to boot a hard disk image named pos32.rd, from the
+current directory.
+
+Next, a disk image needs to be made available, for Xhomer to boot from.  This can
+be either a floppy image or a hard disk image (see the "Download" section).  Make
+sure that the configuration file points to this image (the default of the provided
+configuration file is to look for "pos32.rd"  in ".." - i.e. one directory level
+up).
+
+Once these steps have been completed, the emulator can be started by running the
+"xhomer" binary.
+
+If running in windowed mode, the top of the window frame will display the emulator
+up-time (in seconds), the emulated CPU performance in TIPS ("thousand instructions
+per second"), and the state of the Pro's four LEDs (0 indicates off, and 1
+indicates on).
+
+Please also read the "Known Problems" section.
+</pre>
+</body>
+</HTML>

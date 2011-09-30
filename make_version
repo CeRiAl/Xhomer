@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Create new version number
+
+CURRENT_VER=`cat VERSION`
+
+F1C=`echo $CURRENT_VER | cut -d"-" -f1`
+F2C=`echo $CURRENT_VER | cut -d"-" -f2`
+F3C=`echo $CURRENT_VER | cut -d"-" -f3`
+F4C=`echo $CURRENT_VER | cut -d"-" -f4`
+
+NEW_VER=`date "+%-m-%-d-%y"`
+
+F1N=`echo $NEW_VER | cut -d"-" -f1`
+F2N=`echo $NEW_VER | cut -d"-" -f2`
+F3N=`echo $NEW_VER | cut -d"-" -f3`
+
+# Check if new and old version numbers are the same
+
+if [ "$F1C" = "$F1N" -a "$F2C" = "$F2N" -a "$F3C" = "$F3N" ]; then
+  # Base version exists - bump version number
+
+  if [ "$F4C" = "" ]; then
+    F4N="1"
+  else
+    F4N=`expr $F4C + 1`
+  fi
+
+  NEW_VER=$F1N-$F2N-$F3N-$F4N
+fi
+
+# Write new version number out to VERSION file
+
+echo Old version: $CURRENT_VER   New version: $NEW_VER
+
+echo $NEW_VER > VERSION

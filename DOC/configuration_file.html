@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulator Configuration File</h2>
+The emulator has a number of options that can be set through a configuration file
+that is read at startup.  The emulator first looks for this file in ~/.xhomerrc.  If
+that does not exist, it looks for xhomer.cfg, in the current directory.  If that is
+not found either, it relies on built-in defaults.  In the configuration file, blank
+lines and those starting with a "#" character are ignored.  Following is a listing of
+all of the options and their default values, in the case that no configuration file
+is found:
+
+  screen = window
+
+    Sets the initial screen mode.  Valid values are "window" and "full."
+
+  window_position = 0, 0
+
+    Sets window position hints that are passed to the X-server.  These are (x, y)
+    coordinates of the upper left corner of the window, relative to the upper left
+    corner of the screen.
+
+  window_scale = 2
+
+    Sets the vertical display stretch factor for windowed mode.
+
+  full_scale = 3
+
+    Sets the vertical display stretch factor for full-screen mode.
+
+  screen_gamma = 10
+
+    Sets the display gamma correction factor.  It is specified as an integer equal
+    to ten times the desired gamma factor.  See the "Emulated Display" section for
+    more information.
+
+  pcm = on
+
+    Turn this on to use a private colormap in color-indexed X-windows display modes.
+    (These are typically 8-bit modes)  Valid values are "on" and "off."  Turning
+    this option off will cause the emulator to share a colormap with other running
+    X-windows applications, which could potentially lead to an inability to allocate
+    needed colors.
+
+  framebuffers = 0
+
+    Sets the number of frame buffers to be used in full-screen mode.  Valid values
+    are 0, 1, 2 or 3.  If 0 is specified, the number of frame buffers will be auto-
+    detected.  See the "Emulated Display" section for more information.
+
+  serial0 =
+  serial1 =
+  serial2 =
+  serial3 =
+
+    Defines up to four serial devices present in the host system that the emulator
+    may access.  On a Linux system, common settings are "/dev/ttyS0" (for the first
+    serial port) or "/dev/ttyS1" (for the second serial port).  It is also possible
+    to specify the Linux parallel port driver ("/dev/lp").  However, this driver
+    does not support write buffer occupancy reporting, and a workaround needs to
+    be turned on (see the "lp_workaround" option, below).
+
+  la50 = null
+
+    Defines the serial device connected to the output of the la50 printer emulator.
+    Valid values are "serial0," "serial1," "serial2," "serial3," or "null."
+
+  la50_dpi = 300
+
+    Sets the PCL print density for the la50 emulator.
+
+  kb = lk201
+
+    Defines the serial device connected to the emulated keyboard port.  Sensible
+    values are "lk201," "serial0," "serial1," "serial2," or "serial3."
+
+  ptr = null
+
+    Defines the serial device connected to the emulated printer port.  Valid values
+    are "la50," "serial0," "serial1," "serial2," "serial3," or "null."
+
+  com = null
+
+    Defines the serial device connected to the emulated communications port.  Valid
+    values are "la50," "serial0," "serial1," "serial2," "serial3," or "null."
+
+  rd_dir = ./
+
+    Defines the directory that the emulator looks for hard disk images in.
+
+  rx_dir = ./
+
+    Defines the directory that the emulator looks for floppy disk images in.
+
+  rd0 = pos32.rd
+
+    Defines the name of the hard disk image file.
+
+  rx0 = 
+
+    Defines the name of the floppy disk image file for the first floppy drive.
+
+  rx1 = 
+
+    Defines the name of the floppy disk image file for the second floppy drive.
+
+  force_year = -1
+
+    If greater than -1, forces the year value that the real-time clock hardware
+    returns.  Legal settings are integers from -1 to 99.  This may be useful
+    with Pro operating systems with Y2K bugs (Venix, for example, refuses to
+    take the time settings from the clock, if the year value is outside the
+    range of 70-99).
+
+  maint_mode = off
+
+    Set this to "on" to simulate shorting pins 8 and 9 on the printer port.
+    This will cause the maintenance terminal interface registers to become
+    accessible to software running on the Pro.  Some software (for example,
+    the 2.9BSD installation floppy) uses this to run an initial command
+    interface over the printer port.
+
+  int_throttle = off
+
+    Set this to "on" to cause the emulator to throttle interrupts from the
+    periodic interrupt source.  If the emulator is falling behind real-time
+    operation, the interrupt rate will be increased.  If the Pro operating
+    system has not serviced the previous interrupt by the time the next one
+    is due, the emulator will delay generation of periodic interrupts, until
+    the Pro operating system has caught up.  While the emulation itself is
+    slightly less accurate in this mode, the real-time clock is more likely
+    to maintain accurate time, especially on host systems which are too slow
+    to achieve real-time Pro performance.  NOTE:  This is an EXPERIMENTAL
+    feature.  Its affect on Pro operating systems is not fully understood.
+
+  nine_workaround = off
+
+    When used in DGA mode (full-screen), the #9 I128 X-server has a number of
+    bugs.  Turning the "nine_workaround" variable on installs workarounds for
+    these problems.  This option is specific to the #9 I128 X-server.  Valid
+    values are "on" or "off."
+
+  libc_workaround = off
+
+    Turn this workaround on only if running on a pre-glibc-2.0 system.  The
+    workaround prevents crashes during DGA-to-windowed mode switches.  Valid
+    values are "on" or "off."  This workaround is not needed on modern Linux
+    systems.
+
+  lp_workaround = off
+
+    Turn this workaround on if one of the emulator's serial ports is connected
+    to a Linux parallel port device (/dev/lp).  See the description above for
+    "serial0..3."
+
+    Note that this workaround is somewhat crude.  When enabled, it applies to
+    all serial devices (serial0..3), not just those with parallel ports
+    connected.
+</pre>
+</body>
+</HTML>

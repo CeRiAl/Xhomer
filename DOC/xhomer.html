@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<h1>The Xhomer Project</h1>
+<img src="title.gif">
+<pre>
+Xhomer is a machine emulator for the Digital Equipment Corporation (DEC) Pro 350 computer, a
+PDP-11-based machine that was sold in the early to mid-'80's.  Xhomer is based on the PDP-11
+CPU core from the <A HREF="http://simh.trailing-edge.com/">SIMH simulator</A>, and is written entirely in C.
+
+<a name=supported_platforms>
+<h2>Supported Platforms</h2>
+Xhomer is an X-windows application that was developed and tested on an x86 Linux system (Red
+Hat 8.0, most recently).  It will likely build and run on other Unix-like systems as well,
+possibly requiring minor tweaks to the Makefile.  In addition to the source, a completely
+statically-linked x86 Linux binary is provided.
+
+<a name=quick_start>
+<h2>Quick Start</h2>
+If you have access to an x86 Linux system, and would like to see a quick demo of Xhomer,
+only two files are required.  Download this <A HREF="xhomer.static.tgz">statically-linked Xhomer binary</A> and the
+<A HREF="pos32.rd.gz">P/OS 3.2 hard disk image file</A>.  Untar the binary (the tarball contains a single executable
+only) and gunzip the disk image in the same directory (the latter expands to about 67 MB):
+
+  gunzip -dc xhomer.static.tgz | tar xvf -
+  gunzip pos32.rd.gz
+
+Next, simply run "xhomer.static."  To exit Xhomer, make sure the emulator window has focus,
+then press ctrl-F1, and select the "Shutdown emulator" option.
+
+<a name=download>
+<h2>Download</h2>
+<A HREF="xhomer-12-14-03.tgz">Xhomer source</A> (version 12-14-03)
+  (filesize: 312166 md5sum: 7eab258f5a130be9950c2032a9e10946)
+
+<A HREF="xhomer.static.tgz">Xhomer statically-linked x86 Linux binary</A> (same file as in "Quick Start")
+  (filesize: 665086 md5sum: 7dac40198073f476a384390f9f39006f)
+
+<A HREF="pos32.rd.gz">P/OS 3.2 hard disk image</A> (same file as in "Quick Start")
+  (filesize: 3789644 md5sum: a611327714417d9b629cd20e540ce974 - uncompresses to 67 MB)
+  (press return to log in to P/OS)
+
+<A HREF="venix2.rd.gz">Venix 2.0 hard disk image</A>
+  (filesize: 1749690 md5sum: 22d5c154c11cc762f03d609ddbce4d0b - uncompresses to 33 MB)
+  (log in as user "root" for a shell, or as user "demo" to see the graphics demo -
+  neither account has a password)
+
+<A HREF="pos32_install_floppies.tgz">P/OS 3.2 installation floppy disk images</A>
+  (filesize: 2955387 md5sum: 25afdae87f37469e9f5cac088fda81dd)
+
+(Caution: Some web browsers might remove the ".gz" extension from the disk image filenames, without
+actually decompressing them.  If this happens, add the ".gz" extension back manually before running
+gunzip.)
+
+<A NAME=feedback>
+<h2>Feedback</h2>
+Feedback, questions, bug reports, patches, etc. are always welcome.  Also, I would be very
+interested in hearing whether anyone is able to run other operating systems (2.9BSD, RT-11?).
+Please contact me at the address below.
+<hr>                      
+Last updated 12-14-03 by Tarik Isani <img src="contact.gif">
+</pre>
+</body>
+</HTML>

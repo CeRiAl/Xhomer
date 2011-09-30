@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulated Keyboard, Printer and Communications Ports</h2>
+The Pro's keyboard, printer and communications ports may be mapped to a number of
+different devices and pseudo-devices in the host system.  These mappings are
+specified in the emulator configuration file, and may also be changed at runtime,
+through the emulator control menu.  The list of real devices is as follows:
+
+  serial0
+  serial1
+  serial2
+  serial3
+
+    Each of these devices may be defined to map to a different physical port in
+    the host system.  Please see the "Emulator Configuration File" section.
+
+The list of pseudo-devices includes:
+
+  digipad
+
+    This is a partial emulation of a GTCO Micro Digipad, a digitizing tablet.  The
+    X-windows mouse is used to emulate this device.  The emulation of this device
+    is not complete, and it should not be considered reliable.
+
+  lk201
+
+    This is an emulation of the Pro's LK201 keyboard, using the X-windows keyboard.
+    Please see the "LK201 Keyboard Mapping" section for a description of how the
+    keys are mapped.
+
+  la50
+
+    This is a partial LA50 printer emulator.  It converts Sixel graphics commands
+    (as produced by P/OS) to PCL.  This pseudo-device needs to be told where to
+    send its output.  This is done through the "la50" option in the configuration
+    file.  There is also an "la50_dpi" option associated with this pseudo device,
+    to set the print density.  Please see the "Emulator Configuration File"
+    section for more information.
+
+  null
+
+    This is a dummy device that leaves the associated port disconnected.
+
+The emulated keyboard, printer port and communications port are "connected" to
+devices by making assignments to the variables "kb," "ptr," and "com," respectively,
+in the emulator configuration file.
+
+Examples:
+
+To emulate the Pro's keyboard through the X-windows keyboard, specify the following
+in the emulator configuration file:
+
+  kb = lk201
+
+To connect the Pro's communications port directly to the first serial port on a
+typical Linux PC (/dev/ttyS0), specify the following (serial0 is chosen
+arbitrarily):
+
+  serial0 = /dev/ttyS0
+  com = serial0
+
+To connect the Pro's printer port to a 300 DPI HP PCL laser printer connected to a
+printer port on a typical Linux PC (/dev/lp0), while emulating the Sixel printing
+capabilities of an LA50, specify (serial1 is chosen arbitrarily):
+
+  serial1 = /dev/lp0
+  la50 = serial1
+  la50_dpi = 300
+  ptr = la50
+  lp_workaround = on
+
+Note that, depending on the device privileges on the host system, it might be
+necessary to run Xhomer with root privileges, to access the various physical ports.
+(see the "Building Xhomer" section)
+</pre>
+</body>
+</HTML>

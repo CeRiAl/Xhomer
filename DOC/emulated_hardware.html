@@ -1,0 +1,47 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulated Hardware</h2>
+Most of the Pro's base hardware is emulated, including:
+
+  -F11 CPU (emulated with a modified J11 core)
+  -floating point processor
+  -real-time clock
+  -keyboard
+  -printer port
+  -communications port
+  -1024 Kbytes of RAM
+
+Additionally, the following add-in boards are emulated:
+
+  -standard video controller
+  -extended bitmap option
+  -hard disk controller (supporting a single emulated hard drive, up to 71 MB)
+  -floppy controller (supporting two emulated RX50 floppies)
+
+The real-time clock maintains synchronization with the clock of the host system.  The
+keyboard may be emulated through X-windows, or a real LK201 may be connected through a
+serial port on the host system.  The printer and communications ports may be emulated
+by physical serial or parallel ports on the host system.  The video subsystem is
+emulated through X-windows.  Both windowed and full-screen (through DGA) modes are
+implemented.  The hard disk and floppy disks are emulated through disk image files.
+
+Additionally, a partial LA50 printer emulation allows one to print Sixel graphics
+from P/OS to a locally attached HP PCL printer.
+
+Xhomer is able to boot an unmodified Pro 350 boot ROM, and passes all hardware
+diagnostics that it performs.  It is also able to boot and run unmodified
+installations of P/OS 3.2 and Venix 2.0.
+
+It should be noted that there are some modes of some hardware subsystems that are not
+implemented.  These modes appear not to be utilized by P/OS or Venix.
+</pre>
+</body>
+</HTML>

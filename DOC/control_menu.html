@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulator Control Menu</h2>
+Some of the emulator's configuration can be changed at runtime, through an on-screen
+menu.  This menu also needs to be accessed to shut the emulator down.  To access the
+control menu, press ctrl-F1, while the emulator window has focus.  A transparent menu
+will be overlaid on top of the emulator window.  The emulator will continue to run.
+When the menu is active, the item selection bar can be moved up and down with the up
+and down arrow keys.  Press enter to select a particular item.  Also, when the menu
+is active, the menu intercepts the up and down arrow keys and the enter and "Do" keys.
+Other key presses are passed on to the emulated system.  Options which are not
+implemented yet or are not changeable are grayed out and can not be selected.
+
+Following is a description of the various menu items:
+
+  Return to emulator
+
+    This turns the menu off.
+
+  Screen mode
+
+    The current screen mode is displayed ("window" or "full").  Selecting this item
+    will toggle the screen mode.
+
+  rx0
+
+    The name of the floppy image connected to the first emulated floppy drive is
+    displayed.  Selecting this item will simulate a "floppy door open" event on
+    the emulator and will allow a different floppy image to be selected.  Selecting
+    the blank line at the top of the sub-menu will allow an empty floppy drive to
+    be simulated.  Directories are marked with a leading "D."  ".." will go up one
+    level in the directory structure and "." will stay in the current directory
+    (not a terribly useful opton!).  Once an image has been selected, the emulator
+    will check its size.  If it is not exactly 409,600 bytes, it will refuse to
+    attach it as a floppy image.  But, if the image passes the size test, a
+    "floppy door close" event is simulated, and the emulator is permitted to
+    access the floppy image.
+
+  rx1
+
+    This option is similar to "rx0," except that it specifies the name of the
+    floppy image connected to the second emulated floppy drive.
+
+  rd0
+
+    This shows the name of the current hard disk emulation file.  It is not a run-
+    time changeable option.
+
+  com
+
+    This shows the name of the serial device that is used to emulate the
+    communications port.  Selecting this item will allow a different assignment to
+    be made.  Note that serial devices which are currently assigned to other ports
+    (i.e. they're in use) are grayed out and may not be selected (except for the
+    "null" device, which may be connected to multiple ports).
+
+  ptr
+
+    This shows the name of the serial device that is used to emulate the printer
+    port, and allows it to be changed.
+
+  kb
+
+    This shows the name of the serial device that is used to emulate the keyboard.
+    It should generally be set to lk201.  Although, it is possible to connect a
+    real LK201 to a serial port.
+
+  Save configuration
+  Restore defaults and reset
+  Reset
+
+    These options are not implemented yet.
+
+  About XHOMER
+
+    This is pretty self-explanatory.
+
+  Shutdown emulator
+
+    Selecting this option will cause the emulator to shut down and exit.
+</pre>
+</body>
+</HTML>

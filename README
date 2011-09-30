@@ -1,0 +1,68 @@
+Xhomer README
+-------------
+
+License
+-------
+Please read the file LICENSE, in this directory, for details.
+
+
+Using Xhomer
+------------
+These are very basic instructions, for building, running and
+exiting the Xhomer DEC Pro 350 emulator.  For more detailed
+documentation, please see DOC/index.html.  Also, up-to-date
+documentation and source code can be obtained from:
+
+  http://xhomer.isani.org/
+
+
+Building Xhomer
+---------------
+Xhomer has been developed and tested on a Linux x86/GNU/X-windows
+system.  It is written in C, and will likely build on other
+Unix systems, but the Makefile might require some tweaks.  It
+is assumed that the version of make in use is Gnu make (gmake)
+and that gcc will be used for compilation.
+
+From the directory in which this README resides:
+
+1. Run "make clean"
+
+2. Run "make"
+
+   This should produce a dynamically-linked executable named
+   "xhomer," in the current directory.
+
+3. (OPTIONAL) If you would like a statically-linked executable,
+
+   run "make xhomer.static"
+
+   This will produce a binary named xhomer.static
+
+
+Running Xhomer
+--------------
+1. Obtain a Pro hard disk image file (pos32.rd or venix2.rd, for
+   example).
+
+2. Modify the Xhomer configuration file (xhomer.cfg), if necessary,
+   to point to the hard disk image (using the "rd_dir" and "rd0"
+   variables).  xhomer.cfg must exist in the directory Xhomer is
+   run from.  Alternatively, the file can be copied to ~/.xhomerrc.
+   If ~/.xhomerrc exists, it will be used instead of xhomer.cfg.
+   The provided configuration file contains documentation for all
+   of its options.  Make sure they are set appropriately.
+
+3. Run "xhomer"
+
+   The operating system present on the disk image file should now
+   boot.
+
+
+Exiting Xhomer
+--------------
+1. While the Xhomer window has focus, press ctrl-F1.
+
+2. The emulator control menu should now be visible.  Select
+   the "Shutdown emulator" option with the up/down arrow keys, and
+   press enter.

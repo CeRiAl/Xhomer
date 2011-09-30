@@ -1,0 +1,46 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Change Log</h2>
+9-16-06:
+
+  -Removed bits 0..2 of MMR3, to match the F11 more closely.
+
+  -Added emulation of the maintenance terminal interface (printer port
+   functionality only - no MicroODT).  This is used by the 2.9BSD
+   installation floppy.  See the configuration file documentation.
+
+  -Added byte-write support for video memory (used by 2.9BSD).
+
+  -Added experimental "periodic interrupt throttle" feature, to allow the
+   real-time clock to keep up on slower host systems.  See the new
+   "int_throttle" option in the configuration file documentation.  The
+   option is off by default.
+
+  -Recoded part of pro_clk, to remove dependency on 64-bit integers.
+
+  -Added various simple build scripts, which can be used instead of the
+   Makefile:
+
+     make.simple: This is a minimal build script that should allow
+       easier initial builds on currently unsupported platforms.
+
+     make.sgi: This script builds Xhomer on SGI Irix, using the
+       standard SGI MIPS compiler.
+
+  -Added performance data from various host machines on the "performance"
+   page.
+
+12-14-03:
+
+  First public release of Xhomer.
+</pre>
+</body>
+</HTML>

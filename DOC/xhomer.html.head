@@ -1,0 +1,38 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<h1>The Xhomer Project</h1>
+<img src="title.gif">
+<pre>
+Xhomer is a machine emulator for the Digital Equipment Corporation (DEC) Pro 350 computer, a
+PDP-11-based machine that was sold in the early to mid-'80's.  Xhomer is based on the PDP-11
+CPU core from the <A HREF="http://simh.trailing-edge.com/">SIMH simulator</A>, and is written entirely in C.
+
+<a name=supported_platforms>
+<h2>Supported Platforms</h2>
+Xhomer is an X-windows application that was developed and tested on an x86 Linux system (Red
+Hat 8.0, most recently).  It will likely build and run on other Unix-like systems as well,
+possibly requiring minor tweaks to the Makefile.  In addition to the source, a completely
+statically-linked x86 Linux binary is provided.
+
+<a name=quick_start>
+<h2>Quick Start</h2>
+If you have access to an x86 Linux system, and would like to see a quick demo of Xhomer,
+only two files are required.  Download this <A HREF="xhomer.static.tgz">statically-linked Xhomer binary</A> and the
+<A HREF="pos32.rd.gz">P/OS 3.2 hard disk image file</A>.  Untar the binary (the tarball contains a single executable
+only) and gunzip the disk image in the same directory (the latter expands to about 67 MB):
+
+  gunzip -dc xhomer.static.tgz | tar xvf -
+  gunzip pos32.rd.gz
+
+Next, simply run "xhomer.static."  To exit Xhomer, make sure the emulator window has focus,
+then press ctrl-F1, and select the "Shutdown emulator" option.
+
+<a name=download>
+<h2>Download</h2>

@@ -1,0 +1,2 @@
+#!/bin/sh
+cc -O3 -DINLINE= -DLOCAL=static -DGLOBAL=extern -DMM_CACHE=8 -DPERF_MONITOR -DPRO -DRTC -DSHM -DBUILTIN_ROMS pdp11*.c scp*.c pro_*.c term*x11.c -I/usr/X11R6/include -I/usr/X11/include -L/usr/X11R6/lib -L/usr/X11/lib -lm -lX11 -lXext -o xhomer

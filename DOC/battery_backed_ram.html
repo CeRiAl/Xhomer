@@ -1,0 +1,21 @@
+<HTML>
+<HEAD>
+  <BASE TARGET=right>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Battery Backed RAM</h2>
+A real Pro 350 has 50 bytes of battery-backed RAM.  Xhomer emulates this RAM with a
+100 byte file (half of the bytes are unused), called "bat.ram."  If this file is
+found in the current directory, when Xhomer is invoked, it is loaded.  If it is not
+found, then the emulator's 50 bytes of internal RAM are cleared.  Upon exit, the
+emulator writes the contents of its emulated battery-backed RAM back out to
+"bat.ram."
+</pre>
+</body>
+</HTML>

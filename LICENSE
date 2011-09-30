@@ -1,0 +1,56 @@
+Xhomer License
+--------------
+Xhomer is composed of two sets of source files.  The first
+set of files consists of modified versions of files taken from
+versions 2.2d, 2.3a and 2.3b of the SIMH simulator.  They are
+covered by the license described in the file SIMH, which is part
+of this distribution.  The files that this license applies to
+include:
+
+  pdp11_cpu.c
+  pdp11_defs.h
+  pdp11_fp.c
+  pdp11_sys.c
+  scp.c
+  scp_tty.c
+  sim_defs.h
+
+The second set of files is an original work.  They are covered
+by a different license, namely the GNU General Public License.
+Please see the file COPYING, also in this distribution, for a
+description of this license.  The files that this license applies
+to include:
+
+  pro_2661kb.c
+  pro_2661ptr.c
+  pro_clk.c
+  pro_com.c
+  pro_config.h
+  pro_defs.h
+  pro_digipad.c
+  pro_eq.c
+  pro_font.h
+  pro_init.c
+  pro_int.c
+  pro_kb.c
+  pro_la50.c
+  pro_lk201.c
+  pro_lk201.h
+  pro_maint.c
+  pro_mem.c
+  pro_menu.c
+  pro_null.c
+  pro_ptr.c
+  pro_rd.c
+  pro_reg.c
+  pro_rx.c
+  pro_serial.c
+  pro_version.h
+  pro_vid.c
+  term_overlay_x11.c
+  term_x11.c
+  term_curses.c
+  term_fonthash_curses.c
+  convert_roms.c
+  lbn2xhomer.c
+  venix2xhomer.c

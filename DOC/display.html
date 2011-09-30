@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<pre>
+<h2>Emulated Display</h2>
+Both the standard video controller as well as the extended bitmap option are emulated.
+However, only the Pro's 1024 x 240 mode is implemented.  This doesn't appear to be an
+issue with P/OS or Venix, as they don't seem to use the lower-resolution modes.
+
+The Pro's screen is displayed through X-windows, either in windowed mode or full-
+screen.  The latter is implemented using DGA extensions, and is only available with
+XFree86 X-servers.  The "screen" variable in the configuration file controls which
+mode the emulator starts up in.  While the emulator is running, it is also possible
+to switch back and forth between the two modes, using the emulator control menu.
+
+To start the emulator in windowed mode, the following should be set in the
+configuration file:
+
+  screen = window
+
+And, to start the emulator in full-screen mode, set the following:
+
+  screen = full
+
+Full-screen mode requires root privileges.  See the "Building Xhomer" section for
+more details.
+
+The Pro's display will likely need vertical stretching to look reasonable.
+Vertical scale factors are set independently for windowed and full-screen modes,
+using the "window_scale" and "full_scale" variables in the configuration file.
+Following are the defaults, if nothing is specified:
+
+  window_scale = 2
+
+  full_scale = 3
+
+Additionally, full-screen mode requires a special display mode to be defined in
+the XFree86 configuration file (not the emulator configuration file).  This mode
+must be for a displayable resolution of 1024 x (240*full_scale).  For example, if
+"full_scale" is set to 3, then a 1024 x 720 display mode must be defined.  If the
+emulator is unable to find the appropriate mode when switching to full-screen mode,
+it will print an error message.  Following is an example mode definition that works
+with an SGI 1600SW flatpanel monitor with a #9 graphics card, when "full_scale" is
+set to 3:
+
+  Modeline "1024x720_SGI" 103.125 1024 1312 1366 1664 720 872 877 1030 HSkew 5 +Hsync +Vsync
+
+And, the following mode definition is for more conventional monitors:
+
+  Modeline "1024x720" 65 1024 1048 1184 1328 720 771 777 806   
+
+Full-screen mode is able to utilize anywhere from one to three frame buffers of
+display memory in the graphics card.  Having two frame buffers allows accelerated
+text scrolling.  Having three frame buffers, additionally, allows for smooth glitch-
+free transitions when turning the simulator control menu on and off.  The default
+is to auto-detect the number of available frame buffers.  However, this number may
+also be forced (to a number less than or equal to the maximum number of available
+frame buffers) through the "framebuffers" variable in the configuration file.  The
+emulator will print an error message when attempting to switch into full-screen
+mode if the requested number of frame buffers is greater than what is available.
+
+Please note that support for DGA full-screen mode is considered experimental at
+this point.  Please see the "Known Problems" section for more information.
+
+It is also possible to adjust the display gamma correction function through the
+emulator configuration file.  This is done with the "screen_gamma" variable.  An
+integer value equal to 10 times the desired gamma value should be specified.  For
+most monitors, a value of 10 (corresponding to a gamma of 1.0) should be used.  If
+the color monitor from a real Pro is connected to a PC, it seems to need a value in
+the neighborhood of 22.  (A value greater than 10 will make the display brighter,
+and a value less than 10 will make it dimmer)
+</pre>
+</body>
+</HTML>
