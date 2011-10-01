@@ -827,7 +827,7 @@ int	retchar, schar, menu_pos_old;
 	    retchar = PRO_NOCHAR;
 	  }
 	}
-	else if ((schar == PRO_LK201_PRINT) && (pro_menu_key_ctrl == 1))
+	else if ((schar == PRO_LK201_HOLD) && (pro_menu_key_ctrl == 1))
 	{
 	  /* Turn on top-level menu */
 

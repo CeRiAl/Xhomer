@@ -16,46 +16,12 @@
 
 PRO = Y
 
-#######
-# DGA auto-detection
-#
-# DGA is used for full-screen modes on XF86 X-servers.  The following
-# should auto-detect DGA1 (older systems) or DGA2 (newer systems).
-# In case the auto-detection fails, the USE_DGA options immediately
-# below may be used to override the detected settings.  This should
-# be done by setting one of "USE_DGA1" and "USE_DGA2" to "N" and the
-# other to "Y" or by setting both to "N" (most non-Linux systems).
-
 X11DIR = /usr/X11R6
-
-ifeq ($(X11DIR)/include/X11/extensions/xf86dga.h,$(wildcard $(X11DIR)/include/X11/extensions/xf86dga.h))
-  ifeq ($(X11DIR)/include/X11/extensions/xf86dga1.h,$(wildcard $(X11DIR)/include/X11/extensions/xf86dga1.h))
-    USE_DGA2 = Y
-  else
-    ifeq ($(X11DIR)/include/X11/extensions/xf86vmode.h,$(wildcard $(X11DIR)/include/X11/extensions/xf86vmode.h))
-      USE_DGA1 = Y
-    endif
-  endif
-endif
-
-#######
-# Compile in support for DGA1 full-screen support
-# (set at most one DGA option to Y)
-
-# USE_DGA1 = Y
-# USE_DGA1 = N
-
-#######
-# Compile in support for DGA2 full-screen support
-# (set at most one DGA option to Y)
-
-# USE_DGA2 = Y
-# USE_DGA2 = N
 
 #######
 # Use MIT shared memory in X-windows (for better performance)
 
-USE_SHM = Y
+USE_SHM = N
 
 #######
 # Curses library (for texthomer only)
@@ -68,6 +34,15 @@ NCURSESINC=/apps/gnu/include/ncurses
 NCURSESLIB=/apps/gnu/lib
 NCURSESLINK=-lcurses -ltermcap
 # NCURSESLINK=-lncurses -ltermcap
+
+#######
+# SDL library (for sdlhomer only)
+#
+# "texthomer" works better with ncurses.  This is usually the default
+# curses library for Linux, so this often has no effect, but if you
+# are using another platform, you may need to set this to the paths
+# where you have installed ncurses.
+USE_SDL = Y
 
 #######
 # Setting this causes the emulated realtime clock to be
@@ -124,7 +99,7 @@ CC += -ffloat-store
 
 # The 1st choice runs about 15% slower than the 2nd (-O3 -fomit-frame-pointer).
 # but it (re)compiles faster and unlike the second choice, it is debuggable.
-# CC += -g -O -fno-inline
+#CC += -g -O0 -fno-inline
 CC += -O3 -Winline -fomit-frame-pointer
 
 # Some older gcc's need this on i386 to work around a bug.  As long as
@@ -143,7 +118,7 @@ TARGET = $(shell echo `uname -s`-`uname -r | cut -d . -f 1`)
 
 ifeq ($(PRO),Y)
   CCDEFS += -DPRO
-  CCLINK += -lX11
+#  CCLINK += -lX11
 
   # Some Pro features require extra libraries and defines
 
@@ -160,18 +135,8 @@ ifeq ($(PRO),Y)
     CCLINK += -lXext
   endif
 
-  ifeq ($(USE_DGA1),Y)
-    CCDEFS += -DDGA
-    CCLINK += -lXext
-    CCLINK += -lXxf86dga
-    CCLINK += -lXxf86vm
-  endif
-
-  ifeq ($(USE_DGA2),Y)
-    CCDEFS += -DDGA
-    CCDEFS += -DDGA2
-    CCLINK += -lXext
-    CCLINK += -lXxf86dga
+  ifeq ($(USE_SDL),Y)
+    CCDEFS += -I/opt/local/include/SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
   endif
 
   ifeq ($(USE_EXTRA_STATUS),Y)
@@ -184,8 +149,11 @@ ifeq ($(PRO),Y)
 
   # Try this as the default place for X11 stuff and ncurses
 
-  CCINCS = -I$(X11DIR)/include -I/usr/X11/include -I$(NCURSESINC)
-  CCLIBS = -L$(X11DIR)/lib     -L/usr/X11/lib     -L$(NCURSESLIB)
+#  CCINCS = -I$(X11DIR)/include -I/usr/X11/include -I$(NCURSESINC)
+#  CCLIBS = -L$(X11DIR)/lib     -L/usr/X11/lib     -L$(NCURSESLIB)
+
+  CCINCS = -I$(NCURSESINC)
+  CCLIBS = -L$(NCURSESLIB)
 
   # But some vendors put things in non-standard places
 
@@ -218,13 +186,16 @@ endif
 SOURCES=$(shell /bin/ls pdp11*.c scp*.c pro*.c)
 SOURCES_XHOMER=$(SOURCES) $(shell /bin/ls term*x11.c)
 SOURCES_TEXTHOMER=$(SOURCES) term_curses.c
-SOURCES_DEPEND=$(SOURCES) $(shell /bin/ls term*x11.c term_curses.c)
+SOURCES_SDLHOMER=$(SOURCES) term_sdl.c
 OBJECTS=$(SOURCES_XHOMER:%.c=%.o)
 OBJECTS_TEXTHOMER=$(SOURCES_TEXTHOMER:%.c=%.o)
+OBJECTS_SDLHOMER=$(SOURCES_SDLHOMER:%.c=%.o)
 PGOBJECTS=$(SOURCES_XHOMER:%.c=%.pg.o)
 
 %.o:	%.c; $(CC) -DINLINE=inline $(CCINCS) $(CCDEFS) -c $*.c -o $@
 %.pg.o:	%.c; $(CC) -DINLINE=   -pg $(CCINCS) $(CCDEFS) -c $*.c -o $@
+
+all: sdlhomer
 
 xhomer: $(OBJECTS)
 	$(CC) $^ $(CCLIBS) $(CCLINK) -o $@
@@ -238,6 +209,13 @@ texthomer: $(OBJECTS_TEXTHOMER)
 
 texthomer.static: $(OBJECTS_TEXTHOMER)
 	$(CC) $^ $(CCLIBS) $(NCURSESLINK) -lm -static -o $@
+	strip $@
+
+sdlhomer: $(OBJECTS_SDLHOMER)
+	$(CC) $^ $(CCLIBS) $(CCLINK) -L/opt/local/lib -lSDLmain -lSDL -Wl,-framework,Cocoa -lm -o $@
+
+sdlhomer.static: $(OBJECTS_SDLHOMER)
+	$(CC) $^ $(CCLIBS) -L/opt/local/lib /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit -lm -static -o $@
 	strip $@
 
 pdp11: $(OBJECTS)
@@ -260,13 +238,13 @@ archive:
 	make_archive
 
 clean:
-	-@rm -f *.o *~ xhomer xhomer.static texthomer texthomer.static convert_roms
+	-@rm -f *.o *~ xhomer xhomer.static texthomer texthomer.static sdlhomer sdlhomer.static convert_roms
 
 dep depend:
 	@egrep -e "# Dependencies" Makefile > /dev/null || \
 	echo "# Dependencies" >> Makefile
 	sed '/^\#\ Dependencies/q' < Makefile > Makefile.New
-	$(CC) -MM $(CCINCS) $(CCDEFS) $(SOURCES_DEPEND) >> Makefile.New
+	$(CC) -MM $(CCINCS) $(CCDEFS) $(SOURCES_XHOMER) >> Makefile.New
 	mv Makefile Makefile.bak
 	mv Makefile.New Makefile
 
@@ -322,10 +300,12 @@ pro_vid.o: pro_vid.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
   pro_config.h
 scp.o: scp.c sim_defs.h pro_defs.h pro_version.h pro_config.h
 scp_tty.o: scp_tty.c sim_defs.h
-term_curses.o: term_curses.c pro_defs.h pro_version.h pro_config.h \
-  pro_lk201.h term_fonthash_curses.c
 term_overlay_x11.o: term_overlay_x11.c pro_defs.h pro_version.h \
   pro_config.h pro_font.h
 term_x11.o: term_x11.c \
   pro_defs.h pro_version.h \
   pro_config.h pro_lk201.h
+term_sdl.o: term_sdl.c \
+  pro_defs.h pro_version.h \
+  pro_config.h pro_lk201.h
+  

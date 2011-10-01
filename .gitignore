@@ -1,0 +1,7 @@
+*.o
+.DS_Store
+.project
+.cproject
+
+pos32.rd
+sdlhomer

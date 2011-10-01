@@ -43,6 +43,9 @@
 #ifdef PRO
 #include "pro_defs.h"
 #endif
+
+#include <SDL.h>
+
 extern char sim_name[];
 extern DEVICE *sim_devices[];
 extern REG *sim_PC;
