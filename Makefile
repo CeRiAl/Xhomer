@@ -125,11 +125,15 @@ ifeq ($(USE_NCURSES),Y)
   CCLIBS = -lcurses -ltermcap
 endif
 ifeq ($(USE_SDL),Y)
-  CCINCS += -I/opt/local/include/SDL
-  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
-  CCLIBS += -L/opt/local/lib
-  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
-  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
+#  CCINCS += -I/opt/local/include/SDL
+  CCINCS += -I/usr/include/SDL
+#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
+  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
+#  CCLIBS += -L/opt/local/lib
+#  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
+  CCLINK += -lSDL -lpthread
+#  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
+  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
 endif
 ifeq ($(USE_X),Y)
   X11DIR = /usr/X11R6
