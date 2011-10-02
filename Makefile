@@ -121,19 +121,37 @@ endif
 
 
 ifeq ($(USE_NCURSES),Y)
+#Mac#  CCINCS += 
+#Linux#  CCINCS += 
+#Cygwin#  CCINCS += -I/usr/include/ncurses
+  CCINCS += -I/usr/include/ncurses
   CCDEFS += -DHAS_CURSES
-  CCLIBS = -lcurses -ltermcap
+#Mac#  CCLIBS = -lcurses -ltermcap
+#Linux#  CCLIBS = -lcurses -ltermcap
+#Cygwin#  CCLIBS = -lcurses
+  CCLIBS = -lcurses
 endif
 ifeq ($(USE_SDL),Y)
-#  CCINCS += -I/opt/local/include/SDL
-  CCINCS += -I/usr/include/SDL
-#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
-  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
-#  CCLIBS += -L/opt/local/lib
-#  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
-  CCLINK += -lSDL -lpthread
-#  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
-  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
+#Mac#  CCINCS += -I/opt/local/include/SDL
+#Linux#  CCINCS += -I/usr/include/SDL
+#Cygwin#  CCINCS += -I/usr/local/include/SDL
+  CCINCS += -I/usr/local/include/SDL
+#Mac#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
+#Linux#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
+#Cygwin#  CCDEFS += -DHAS_SDL
+  CCDEFS += -DHAS_SDL
+#Mac#  CCLIBS += -L/opt/local/lib
+#Linux#  CCLIBS += 
+#Cygwin#  CCLIBS += -L/usr/local/lib
+  CCLIBS += -L/usr/local/lib
+#Mac#  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
+#Linux#  CCLINK += -lSDL -lpthread
+#Cygwin#  CCLINK += -lSDLmain -lSDL
+  CCLINK += -lSDLmain -lSDL
+#Mac#  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
+#Linux#  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
+#Cygwin#  CCLINKSTATIC += -lSDLmain -lSDL -luser32 -lgdi32 -lwinmm -ldxguid
+  CCLINKSTATIC += -lSDLmain -lSDL -luser32 -lgdi32 -lwinmm -ldxguid
 endif
 ifeq ($(USE_X),Y)
   X11DIR = /usr/X11R6
