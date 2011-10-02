@@ -372,8 +372,8 @@ void pro_x11_overlay_init (int psize, int cmode, int bpixel, int wpixel)
 	  else
 	    overlay_a = PRO_OVERLAY_A;
 
-	  pro_overlay_data = (char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT*pixsize);
-	  pro_overlay_alpha = (char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT);
+	  pro_overlay_data = (unsigned char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT*pixsize);
+	  pro_overlay_alpha = (unsigned char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT);
 	  pro_x11_overlay_on = 0;
 	  pro_overlay_open = 1;
 	}
@@ -644,7 +644,7 @@ int	key;
 void pro_x11_screen_save_keys ()
 {
 int		i;
-unsigned char	keys[32];
+char	keys[32];
 
 
 	XQueryKeymap(ProDisplay, keys);
@@ -660,7 +660,7 @@ unsigned char	keys[32];
 void pro_x11_screen_update_keys ()
 {
 int		i, key, oldkey, curkey;
-unsigned char	keys[32];
+char	keys[32];
 
 
 	XQueryKeymap(ProDisplay, keys);
@@ -1577,6 +1577,207 @@ void pro_x11_scroll ()
           + (((na*(pro_mask_b&color) + a*(pro_mask_b&opix))/PRO_OVERLAY_MAXA)&pro_mask_b)
 
 
+/* The following is a workaround for an x11-hang bug under Linux */
+
+LOCAL int XCheckMaskEvent_nohang(Display* dpy, long event_mask, XEvent* event)
+{
+   static int checkready = 0;
+   static sigset_t checkmask;
+   sigset_t oldmask;
+   Bool event_return;
+
+   if (!checkready)
+   {
+      checkready = 1;
+      sigemptyset(&checkmask);
+/*
+      sigaddset(&checkmask, SIGUSR1);
+      sigaddset(&checkmask, SIGUSR2);
+*/
+      sigaddset(&checkmask, SIGALRM);
+      /*
+       * Add any other signals to the mask that might otherwise
+       * be set off during the XCheckMaskEvent.  It is possible
+       * that none of this is needed if libX11 is compiled with
+       * linux libc-6, because a lot of the code in libX11 compiles
+       * differently with libc-6 (because of improved thread support.)
+       * Meanwhile, this hack should allow it to work with libc-5.
+       */
+   }
+   sigprocmask(SIG_BLOCK, &checkmask, &oldmask);
+   event_return = XCheckMaskEvent(dpy, event_mask, event);
+   sigprocmask(SIG_UNBLOCK, &oldmask, 0);
+   return event_return;
+}
+
+
+/* Service X events */
+
+void pro_x11_screen_service_events ()
+{
+XEvent		event; /* XXX should this be XDGAEvent for DGA2? */
+#ifdef DGAXXX
+XKeyEvent	keyevent;
+#endif
+int		expose = 0;
+int		key;
+int		eventtype;
+
+
+	/* If multiple events are buffered up, flush them all out */
+
+	/* XXX bug workaround */
+
+	while (XCheckMaskEvent_nohang(ProDisplay, ProEventMask, (XEvent *)&event))
+	{
+	  eventtype = event.type;
+
+#ifdef DGAXXX
+	  if (pro_screen_full)
+	    eventtype -= pro_vid_dga_eventbase;
+#endif
+
+	  switch (eventtype)
+	  {
+	    case Expose:
+	      expose = 1;
+	      break;
+
+	    case KeyPress:
+#ifdef DGAXXX
+#ifdef DGA
+#ifdef DGA2
+	      if (pro_screen_full)
+	      {
+	        XDGAKeyEventToXKeyEvent((XDGAKeyEvent*)&event.xkey, (XKeyEvent*)&keyevent);
+	        key = XLookupKeysym((XKeyEvent*)&keyevent, 0);
+	      }
+              else
+#endif
+#endif
+#endif
+	      key = XLookupKeysym((XKeyEvent*)&event, 0);
+	      key = pro_keyboard_lookup_down(key);
+	      if (key != PRO_NOCHAR)
+	        pro_keyboard_fifo_put(key);
+	      break;
+
+	    case KeyRelease:
+#ifdef DGAXXX
+#ifdef DGA
+#ifdef DGA2
+	      if (pro_screen_full)
+	      {
+	        XDGAKeyEventToXKeyEvent((XDGAKeyEvent*)&event.xkey, (XKeyEvent*)&keyevent);
+	        key = XLookupKeysym((XKeyEvent*)&keyevent, 0);
+	      }
+              else
+#endif
+#endif
+#endif
+	      key = XLookupKeysym((XKeyEvent*)&event, 0);
+	      key = pro_keyboard_lookup_up(key);
+	      if (key != PRO_NOCHAR)
+	        pro_keyboard_fifo_put(key);
+	      break;
+
+	    case MotionNotify:
+#ifdef DGA
+	      if (pro_screen_full)
+	      {
+	        /* DGA mouse events are returned as *relative* motion */
+
+	        pro_mouse_x += ((XMotionEvent*)&event)->x_root;
+	        pro_mouse_y_screen += ((XMotionEvent*)&event)->y_root;
+	        pro_mouse_y = pro_mouse_y_screen/pro_screen_full_scale;
+	        if (pro_mouse_x >= PRO_VID_SCRWIDTH)
+	          pro_mouse_x = PRO_VID_SCRWIDTH-1;
+	        if (pro_mouse_x < 0)
+	          pro_mouse_x = 0;
+	        if (pro_mouse_y >= PRO_VID_SCRHEIGHT)
+	          pro_mouse_y = PRO_VID_SCRHEIGHT-1;
+	        if (pro_mouse_y < 0)
+	          pro_mouse_y = 0;
+	      }
+	      else
+#endif
+	      {
+	        pro_mouse_x = ((XMotionEvent*)&event)->x;
+	        pro_mouse_y = (((XMotionEvent*)&event)->y)/pro_screen_window_scale;
+	      }
+
+	      break;
+
+	    case ButtonPress:
+	      switch (((XButtonEvent *)&event)->button)
+	      {
+	        case Button1:
+	          pro_mouse_l = 1;
+	          break;
+
+	        case Button2:
+	          pro_mouse_m = 1;
+	          break;
+
+	        case Button3:
+	          pro_mouse_r = 1;
+	          break;
+	      }
+	      break;
+
+	    case ButtonRelease:
+	      switch (((XButtonEvent *)&event)->button)
+	      {
+	        case Button1:
+	          pro_mouse_l = 0;
+	          break;
+
+	        case Button2:
+	          pro_mouse_m = 0;
+	          break;
+
+	        case Button3:
+	          pro_mouse_r = 0;
+	          break;
+	      }
+	      break;
+
+	    case EnterNotify:
+	      if (pro_mouse_in == 0)
+	      {
+	        pro_x11_screen_save_old_keyboard();
+	        pro_mouse_in = 1;
+	        pro_x11_screen_restore_keyboard();
+	        pro_x11_screen_update_keys();
+	      }
+	      break;
+
+	    case LeaveNotify:
+	      if (pro_mouse_in == 1)
+	      {
+	        pro_x11_screen_save_keys();
+	        pro_mouse_in = 0;
+	        pro_x11_screen_restore_old_keyboard();
+	      }
+	      break;
+	  }
+	}
+
+	/* Check if screen should be updated */
+
+	if (expose)
+	{
+	  /* Clear the window */
+
+	  XClearWindow(ProDisplay, ProWindow);
+
+	  /* Clear display cache, forcing full update */
+
+	  pro_clear_mvalid();
+	}
+}
+
+
 /* This is called every emulated vertical retrace */
 
 void pro_x11_screen_update ()
@@ -1944,207 +2145,6 @@ void pro_x11_keyboard_click_on ()
 	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
-}
-
-
-/* The following is a workaround for an x11-hang bug under Linux */
-
-LOCAL int XCheckMaskEvent_nohang(Display* dpy, long event_mask, XEvent* event)
-{
-   static int checkready = 0;
-   static sigset_t checkmask;
-   sigset_t oldmask;
-   Bool event_return;
-
-   if (!checkready)
-   {
-      checkready = 1;
-      sigemptyset(&checkmask);
-/*
-      sigaddset(&checkmask, SIGUSR1);
-      sigaddset(&checkmask, SIGUSR2);
-*/
-      sigaddset(&checkmask, SIGALRM);
-      /*
-       * Add any other signals to the mask that might otherwise
-       * be set off during the XCheckMaskEvent.  It is possible
-       * that none of this is needed if libX11 is compiled with
-       * linux libc-6, because a lot of the code in libX11 compiles
-       * differently with libc-6 (because of improved thread support.)
-       * Meanwhile, this hack should allow it to work with libc-5.
-       */
-   }
-   sigprocmask(SIG_BLOCK, &checkmask, &oldmask);
-   event_return = XCheckMaskEvent(dpy, event_mask, event);
-   sigprocmask(SIG_UNBLOCK, &oldmask, 0);
-   return event_return;
-}
-
-
-/* Service X events */
-
-void pro_x11_screen_service_events ()
-{
-XEvent		event; /* XXX should this be XDGAEvent for DGA2? */
-#ifdef DGAXXX
-XKeyEvent	keyevent;
-#endif
-int		expose = 0;
-int		key;
-int		eventtype;
-
-
-	/* If multiple events are buffered up, flush them all out */
-
-	/* XXX bug workaround */
-
-	while (XCheckMaskEvent_nohang(ProDisplay, ProEventMask, (XEvent *)&event))
-	{
-	  eventtype = event.type;
-
-#ifdef DGAXXX
-	  if (pro_screen_full)
-	    eventtype -= pro_vid_dga_eventbase;
-#endif
-	
-	  switch (eventtype)
-	  {
-	    case Expose:
-	      expose = 1;
-	      break;
-
-	    case KeyPress:
-#ifdef DGAXXX
-#ifdef DGA
-#ifdef DGA2
-	      if (pro_screen_full)
-	      {
-	        XDGAKeyEventToXKeyEvent((XDGAKeyEvent*)&event.xkey, (XKeyEvent*)&keyevent);
-	        key = XLookupKeysym((XKeyEvent*)&keyevent, 0);
-	      }
-              else
-#endif
-#endif
-#endif
-	      key = XLookupKeysym((XKeyEvent*)&event, 0);
-	      key = pro_keyboard_lookup_down(key);
-	      if (key != PRO_NOCHAR)
-	        pro_keyboard_fifo_put(key);
-	      break;
-
-	    case KeyRelease:
-#ifdef DGAXXX
-#ifdef DGA
-#ifdef DGA2
-	      if (pro_screen_full)
-	      {
-	        XDGAKeyEventToXKeyEvent((XDGAKeyEvent*)&event.xkey, (XKeyEvent*)&keyevent);
-	        key = XLookupKeysym((XKeyEvent*)&keyevent, 0);
-	      }
-              else
-#endif
-#endif
-#endif
-	      key = XLookupKeysym((XKeyEvent*)&event, 0);
-	      key = pro_keyboard_lookup_up(key);
-	      if (key != PRO_NOCHAR)
-	        pro_keyboard_fifo_put(key);
-	      break;
-
-	    case MotionNotify:
-#ifdef DGA
-	      if (pro_screen_full)
-	      {
-	        /* DGA mouse events are returned as *relative* motion */
-
-	        pro_mouse_x += ((XMotionEvent*)&event)->x_root;
-	        pro_mouse_y_screen += ((XMotionEvent*)&event)->y_root;
-	        pro_mouse_y = pro_mouse_y_screen/pro_screen_full_scale;
-	        if (pro_mouse_x >= PRO_VID_SCRWIDTH)
-	          pro_mouse_x = PRO_VID_SCRWIDTH-1;
-	        if (pro_mouse_x < 0)
-	          pro_mouse_x = 0;
-	        if (pro_mouse_y >= PRO_VID_SCRHEIGHT)
-	          pro_mouse_y = PRO_VID_SCRHEIGHT-1;
-	        if (pro_mouse_y < 0)
-	          pro_mouse_y = 0;
-	      }
-	      else
-#endif
-	      {
-	        pro_mouse_x = ((XMotionEvent*)&event)->x;
-	        pro_mouse_y = (((XMotionEvent*)&event)->y)/pro_screen_window_scale;
-	      }
-
-	      break;
-
-	    case ButtonPress:
-	      switch (((XButtonEvent *)&event)->button)
-	      {
-	        case Button1:
-	          pro_mouse_l = 1;
-	          break;
-
-	        case Button2:
-	          pro_mouse_m = 1;
-	          break;
-
-	        case Button3:
-	          pro_mouse_r = 1;
-	          break;
-	      }
-	      break;
-
-	    case ButtonRelease:
-	      switch (((XButtonEvent *)&event)->button)
-	      {
-	        case Button1:
-	          pro_mouse_l = 0;
-	          break;
-
-	        case Button2:
-	          pro_mouse_m = 0;
-	          break;
-
-	        case Button3:
-	          pro_mouse_r = 0;
-	          break;
-	      }
-	      break;
-
-	    case EnterNotify:
-	      if (pro_mouse_in == 0)
-	      {
-	        pro_x11_screen_save_old_keyboard();
-	        pro_mouse_in = 1;
-	        pro_x11_screen_restore_keyboard();
-	        pro_x11_screen_update_keys();
-	      }
-	      break;
-
-	    case LeaveNotify:
-	      if (pro_mouse_in == 1)
-	      {
-	        pro_x11_screen_save_keys();
-	        pro_mouse_in = 0;
-	        pro_x11_screen_restore_old_keyboard();
-	      }
-	      break;
-	  }
-	}
-
-	/* Check if screen should be updated */
-
-	if (expose)
-	{
-	  /* Clear the window */
-
-	  XClearWindow(ProDisplay, ProWindow);
-
-	  /* Clear display cache, forcing full update */
-
-	  pro_clear_mvalid();
-	}
 }
 
 

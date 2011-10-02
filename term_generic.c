@@ -99,12 +99,18 @@ void pro_overlay_print(int x, int y, int xnor, int font, char *text) {
 
 /* Initialize the display */
 int pro_screen_init () {
-	return pro_gfx_current_driver->screen_init();
+	if (pro_gfx_current_driver && pro_gfx_current_driver->screen_init) {
+		return pro_gfx_current_driver->screen_init();
+	} else {
+		return PRO_FAIL;
+	}
 }
 
 /* Closes the display */
 void pro_screen_close () {
-	pro_gfx_current_driver->screen_close();
+	if (pro_gfx_current_driver && pro_gfx_current_driver->screen_close) {
+		pro_gfx_current_driver->screen_close();
+	}
 }
 
 /* Put a title on the display window */
@@ -119,7 +125,9 @@ void pro_screen_update () {
 
 /* Reset routine (called only once) */
 void pro_screen_reset () {
-	pro_gfx_current_driver->screen_reset();
+	if (pro_gfx_current_driver && pro_gfx_current_driver->screen_reset) {
+		pro_gfx_current_driver->screen_reset();
+	}
 }
 
 /* This is called whenever the scroll register changes */

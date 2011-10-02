@@ -549,7 +549,7 @@ void pro_curses_screen_update ()
 
       if (invalid) for (x=0; x<80; x++)
       {
-	 char fontcell[PRO_FONT_SCANLINES*2 + 1];
+	 uchar fontcell[PRO_FONT_SCANLINES*2 + 1];
 	 register unsigned short tmp;
 	 int ofs;
 
@@ -659,7 +659,7 @@ void pro_curses_screen_update ()
 	       case 157: hashed = ACS_STERLING; break;
 #endif
 	       case 158: hashed = ACS_BULLET; break;
-	       default: if (hashed < ' ' || hashed > '~') hashed = '#';
+	       default: if (hashed < ' ' || hashed > '~') hashed = '#'; break;
 	    }
 	    mvwaddch(main_window, y, x, hashed|(bold?A_BOLD:0)|(reverse?A_REVERSE:0));
 	 }
@@ -746,7 +746,7 @@ void pro_curses_overlay_print(int x, int y, int xnor, int font, char *text)
 	 case 31: waddch(overlay_window, ACS_VLINE); break;
 	 case 30: waddch(overlay_window, ACS_LLCORNER); break;
 	 case 28: waddch(overlay_window, ACS_LRCORNER); break;
-	 default: waddch(overlay_window, ACS_BLOCK);
+	 default: waddch(overlay_window, ACS_BLOCK); break;
       }
    }
    if (font) wattroff(overlay_window, A_BOLD);

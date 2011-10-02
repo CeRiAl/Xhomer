@@ -77,8 +77,8 @@ CC += -ffloat-store
 
 # The 1st choice runs about 15% slower than the 2nd (-O3 -fomit-frame-pointer).
 # but it (re)compiles faster and unlike the second choice, it is debuggable.
-#CC += -g -O0 -fno-inline
-CC += -O3 -Winline -fomit-frame-pointer
+CC += -g -O0 -fno-inline
+#CC += -O3 -Winline -fomit-frame-pointer
 
 # Some older gcc's need this on i386 to work around a bug.  As long as
 # omit-frame-pointer is also set, it doesn't seem to hurt performance, so

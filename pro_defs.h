@@ -786,3 +786,4 @@ GLOBAL void pro_screen_service_events(void);
 GLOBAL void pro_overlay_print(int x, int y, int xnor, int font, char *text);
 GLOBAL void pro_overlay_enable(void);
 GLOBAL void pro_overlay_disable(void);
+GLOBAL void pro_gfx_drivers_init(void);

@@ -398,7 +398,7 @@ for (uptr = sim_clock_queue; uptr != NULL; uptr = uptr -> next) {
 	if (uptr == &step_unit) printf ("  Step timer");
 	else if ((dptr = find_dev_from_unit (uptr)) != NULL) {
 		printf ("  %s", dptr -> name);
-		if (dptr -> numunits > 1) printf (" unit %d",
+		if (dptr -> numunits > 1) printf (" unit %ld",
 			uptr - dptr -> units);  }
 	else printf ("  Unknown");
 	printf (" at %d\n", accum + uptr -> time);
@@ -859,9 +859,10 @@ for (i = 1; (dptr = sim_devices[i]) != NULL; i++) {
 		    (UNIT_ATT + UNIT_SEQ))
 			fseek (uptr -> fileref, uptr -> pos, SEEK_SET);  }  }
 stop_cpu = 0;
-if ((int) signal (SIGINT, int_handler) == -1) {		/* set WRU */
-	printf ("Simulator interrupt handler setup failed\n");
-	return SCPE_OK;  }
+//if ((int) signal (SIGINT, int_handler) == -1) {		/* set WRU */
+//	printf ("Simulator interrupt handler setup failed\n");
+//	return SCPE_OK;  }
+signal (SIGINT, int_handler);
 if (ttrunstate () != SCPE_OK) {				/* set console */
 	ttcmdstate ();
 	printf ("Simulator terminal setup failed\n");

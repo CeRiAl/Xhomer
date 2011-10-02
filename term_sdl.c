@@ -82,6 +82,220 @@ LOCAL int	last_size;
 LOCAL int	sdl_blackpixel;
 LOCAL int	sdl_whitepixel;
 
+/* Print a single character into overlay frame buffer */
+/* x = 0..79  y= 0..23 */
+/* xnor = 0 -> replace mode
+   xnor = 1 -> xnor mode */
+
+/* prints 12x10 characters */
+LOCAL void pro_sdl_overlay_print_char(int x, int y, int xnor, int font, char ch)
+{
+int	sx, sy, sx0, sy0; /* screen coordinates */
+int	vindex;
+int	charint;
+
+int sdl_pix, sdl_opix;
+int sdl_bpp = pro_sdl_overlay_data->format->BytesPerPixel;
+
+
+	charint = ((int)ch) - PRO_FONT_FIRSTCHAR;
+	if ((charint < 0) || (charint>(PRO_FONT_NUMCHARS-1)))
+	  charint = 32 - PRO_FONT_FIRSTCHAR;
+
+	sx0 = x * 12;
+	sy0 = y * 10;
+
+	/* Render character */
+
+	for(y=0; y<10; y++)
+	{
+	  sy = sy0 + y;
+
+	  for(x=0; x<12; x++)
+	  {
+	    sx = sx0 + x;
+
+	    /* Set color */
+	    if (((pro_overlay_font[font][charint][y] >> (11-x)) & 01) == 0) {
+	      sdl_pix = sdl_blackpixel;
+	    } else {
+	      sdl_pix = sdl_whitepixel;
+	    }
+
+	    /* Plot pixel */
+	    /* Perform XNOR, if required */
+	    if (xnor == 1)
+	    {
+	      Uint8 *p = (Uint8 *)pro_sdl_overlay_data->pixels + sy * pro_sdl_overlay_data->pitch + sx * sdl_bpp;
+	      switch(sdl_bpp) {
+	        case 1:
+	          sdl_opix = *p;
+	          break;
+	        case 2:
+	          sdl_opix = *(Uint16 *)p;
+	          break;
+	        case 3:
+	          if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+	        	sdl_opix = p[0] << 16 | p[1] << 8 | p[2];
+	          else
+	        	sdl_opix = p[0] | p[1] << 8 | p[2] << 16;
+	          break;
+	        case 4:
+	          sdl_opix = *(Uint32 *)p;
+	          break;
+	        default:
+	          sdl_opix = 0;       /* shouldn't happen, but avoids warnings */
+	          break;
+	      }
+
+	      if (sdl_opix == sdl_blackpixel) {
+	    	if (sdl_pix == sdl_blackpixel)
+	    	  sdl_pix = sdl_whitepixel;
+	    	else
+		      sdl_pix = sdl_blackpixel;
+	      }
+	    }
+
+	    /* Write pixel into frame buffer */
+
+	    Uint8 *p = (Uint8 *)pro_sdl_overlay_data->pixels + sy * pro_sdl_overlay_data->pitch + sx * sdl_bpp;
+	    switch(sdl_bpp) {
+	      case 1:
+	        *p = sdl_pix;
+	        break;
+	      case 2:
+	        *(Uint16 *)p = sdl_pix;
+	        break;
+	      case 3:
+	        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+	          p[0] = (sdl_pix >> 16) & 0xff;
+	          p[1] = (sdl_pix >> 8) & 0xff;
+	          p[2] = sdl_pix & 0xff;
+	        } else {
+	          p[0] = sdl_pix & 0xff;
+	          p[1] = (sdl_pix >> 8) & 0xff;
+	          p[2] = (sdl_pix >> 16) & 0xff;
+	        }
+	        break;
+	      case 4:
+	          *(Uint32 *)p = sdl_pix;
+	          break;
+	    }
+
+	    /* Mark display cache entry invalid */
+	    vindex = vmem((sy<<6) | ((sx>>4)&077));
+	    pro_vid_mvalid[cmem(vindex)] = 0;
+	  }
+	}
+}
+
+
+/* Print text string into overlay frame buffer */
+void pro_sdl_overlay_print(int x, int y, int xnor, int font, char *text)
+{
+int	i, size;
+
+
+	if (pro_overlay_open)
+	{
+	  if (x == -1)
+	    x = start_x;
+	  else if (x == -2)
+	    x = last_x + last_size;
+	  else
+	    start_x = x;
+
+	  if (y == -1)
+	    y = last_y + 1;
+	  else if (y == -2)
+	    y = last_y;
+
+	  if (y > 23)
+	    y = 23;
+
+	  size = strlen(text);
+
+	  for(i=0; i<size; i++)
+	    pro_sdl_overlay_print_char(x+i, y, xnor, font, text[i]);
+
+	  last_x = x;
+	  last_y = y;
+	  last_size = size;
+	}
+}
+
+
+/* Clear the overlay frame buffer */
+void pro_sdl_overlay_clear ()
+{
+	if (pro_overlay_open)
+	{
+	  SDL_FillRect(pro_sdl_overlay_data, NULL, SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, 0));
+	}
+}
+
+
+/* Turn on overlay */
+void pro_sdl_overlay_enable ()
+{
+	pro_sdl_overlay_clear();
+	pro_sdl_overlay_on = 1;
+}
+
+
+/* Turn off overlay */
+void pro_sdl_overlay_disable ()
+{
+	pro_clear_mvalid();
+	pro_sdl_overlay_on = 0;
+}
+
+
+/* Initialize the overlay frame buffer */
+void pro_sdl_overlay_init (int psize, int cmode, int bpixel, int wpixel)
+{
+	if (pro_overlay_open == 0)
+	{
+	  start_x = 0;
+	  last_x = 0;
+	  last_y = 0;
+	  last_size = 0;
+
+	  Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = 0xff000000;
+#endif
+	  pro_sdl_overlay_data = SDL_CreateRGBSurface( (SDL_HWSURFACE | SDL_SRCALPHA), PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, rmask, gmask, bmask, amask);
+
+	  sdl_blackpixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, (255-PRO_OVERLAY_A));
+	  sdl_whitepixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 255, 255, 255, 255);
+
+	  pro_sdl_overlay_on = 0;
+	  pro_overlay_open = 1;
+	}
+}
+
+
+/* Close the overlay frame buffer */
+void pro_sdl_overlay_close ()
+{
+	if (pro_overlay_open)
+	{
+	  SDL_FreeSurface(pro_sdl_overlay_data);
+	  pro_sdl_overlay_on = 0;
+	  pro_overlay_open = 0;
+	}
+}
+
+
 /* Put a title on the display window */
 void pro_sdl_screen_title (char *title)
 {
@@ -263,10 +477,8 @@ int	key;
 void pro_sdl_screen_save_keys ()
 {
 int	i;
-int	keys[SDLK_LAST];
+unsigned char *keys = SDL_GetKeyState(NULL);
 
-
-	*keys = SDL_GetKeyState(NULL);
 
 	for(i=0; i<SDLK_LAST; i++)
 		pro_sdl_keyboard_keys[i] = keys[i];
@@ -278,10 +490,8 @@ int	keys[SDLK_LAST];
 void pro_sdl_screen_update_keys ()
 {
 int	i, key, oldkey, curkey;
-int	keys[SDLK_LAST];
+unsigned char *keys = SDL_GetKeyState(NULL);
 
-
-	*keys = SDL_GetKeyState(NULL);
 
 	for(i=0; i<SDLK_LAST; i++)
 	{
@@ -452,6 +662,89 @@ void pro_sdl_scroll ()
 }
 
 
+/* Service X events */
+void pro_sdl_screen_service_events ()
+{
+SDL_Event sdl_event;
+int		sdl_expose = 0;
+int		key;
+
+
+	/* If multiple events are buffered up, flush them all out */
+	while(SDL_PollEvent(&sdl_event)) {
+		switch(sdl_event.type) {
+			case SDL_VIDEOEXPOSE:
+				sdl_expose = 1;
+				break;
+			case SDL_KEYDOWN:
+				key = sdl_event.key.keysym.sym;
+				key = pro_keyboard_lookup_down(key);
+				if (key != PRO_NOCHAR)
+					pro_keyboard_fifo_put(key);
+				break;
+			case SDL_KEYUP:
+				key = sdl_event.key.keysym.sym;
+				key = pro_keyboard_lookup_up(key);
+				if (key != PRO_NOCHAR)
+					pro_keyboard_fifo_put(key);
+				break;
+			case SDL_MOUSEMOTION:
+		        pro_mouse_x = sdl_event.motion.x;
+		        pro_mouse_y = sdl_event.motion.y/pro_screen_window_scale;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				switch(sdl_event.button.button) {
+					case SDL_BUTTON_LEFT:
+					  pro_mouse_l = 1;
+					  break;
+					case SDL_BUTTON_MIDDLE:
+					  pro_mouse_m = 1;
+					  break;
+					case SDL_BUTTON_RIGHT:
+					  pro_mouse_r = 1;
+					  break;
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				switch(sdl_event.button.button) {
+					case SDL_BUTTON_LEFT:
+					  pro_mouse_l = 0;
+					  break;
+					case SDL_BUTTON_MIDDLE:
+					  pro_mouse_m = 0;
+					  break;
+					case SDL_BUTTON_RIGHT:
+					  pro_mouse_r = 0;
+					  break;
+				}
+				break;
+			case SDL_ACTIVEEVENT:
+				if (sdl_event.active.gain) {
+			        pro_mouse_in = 1;
+			        pro_sdl_screen_update_keys();
+				} else {
+			        pro_sdl_screen_save_keys();
+			        pro_mouse_in = 0;
+				}
+				break;
+			case SDL_QUIT:
+				pro_exit();
+				break;
+		}
+	}
+
+	/* Check if screen should be updated */
+	if (sdl_expose)
+	{
+	  /* Clear the window */
+      SDL_FillRect(ProSDLScreen, NULL, SDL_MapRGB(ProSDLScreen->format, 0, 0, 0));
+
+	  /* Clear display cache, forcing full update */
+	  pro_clear_mvalid();
+	}
+}
+
+
 /* This is called every emulated vertical retrace */
 void pro_sdl_screen_update ()
 {
@@ -464,7 +757,7 @@ SDL_Rect sdl_dstrect;
 int sdl_color;
 int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 
-	/* Service X events */
+	/* Service SDL events */
 
 	pro_sdl_screen_service_events();
 
@@ -701,303 +994,6 @@ void pro_sdl_keyboard_click_on ()
 //	pro_keyboard_control.key_click_percent = 100;
 
 	SDL_Flip(ProSDLScreen);
-}
-
-
-/* Service X events */
-void pro_sdl_screen_service_events ()
-{
-SDL_Event sdl_event;
-int		sdl_expose = 0;
-int		key;
-
-
-	/* If multiple events are buffered up, flush them all out */
-	while(SDL_PollEvent(&sdl_event)) {
-		switch(sdl_event.type) {
-			case SDL_VIDEOEXPOSE:
-				sdl_expose = 1;
-				break;
-			case SDL_KEYDOWN:
-				key = sdl_event.key.keysym.sym;
-				key = pro_keyboard_lookup_down(key);
-				if (key != PRO_NOCHAR)
-					pro_keyboard_fifo_put(key);
-				break;
-			case SDL_KEYUP:
-				key = sdl_event.key.keysym.sym;
-				key = pro_keyboard_lookup_up(key);
-				if (key != PRO_NOCHAR)
-					pro_keyboard_fifo_put(key);
-				break;
-			case SDL_MOUSEMOTION:
-		        pro_mouse_x = sdl_event.motion.x;
-		        pro_mouse_y = sdl_event.motion.y/pro_screen_window_scale;
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				switch(sdl_event.button.button) {
-					case SDL_BUTTON_LEFT:
-					  pro_mouse_l = 1;
-					  break;
-					case SDL_BUTTON_MIDDLE:
-					  pro_mouse_m = 1;
-					  break;
-					case SDL_BUTTON_RIGHT:
-					  pro_mouse_r = 1;
-					  break;
-				}
-				break;
-			case SDL_MOUSEBUTTONUP:
-				switch(sdl_event.button.button) {
-					case SDL_BUTTON_LEFT:
-					  pro_mouse_l = 0;
-					  break;
-					case SDL_BUTTON_MIDDLE:
-					  pro_mouse_m = 0;
-					  break;
-					case SDL_BUTTON_RIGHT:
-					  pro_mouse_r = 0;
-					  break;
-				}
-				break;
-			case SDL_ACTIVEEVENT:
-				if (sdl_event.active.gain) {
-			        pro_mouse_in = 1;
-			        pro_sdl_screen_update_keys();
-				} else {
-			        pro_sdl_screen_save_keys();
-			        pro_mouse_in = 0;
-				}
-				break;
-			case SDL_QUIT:
-				pro_exit();
-				break;
-		}
-	}
-
-	/* Check if screen should be updated */
-	if (sdl_expose)
-	{
-	  /* Clear the window */
-      SDL_FillRect(ProSDLScreen, NULL, SDL_MapRGB(ProSDLScreen->format, 0, 0, 0));
-
-	  /* Clear display cache, forcing full update */
-	  pro_clear_mvalid();
-	}
-}
-
-
-/* Print a single character into overlay frame buffer */
-/* x = 0..79  y= 0..23 */
-/* xnor = 0 -> replace mode
-   xnor = 1 -> xnor mode */
-
-/* prints 12x10 characters */
-LOCAL void pro_sdl_overlay_print_char(int x, int y, int xnor, int font, char ch)
-{
-int	sx, sy, sx0, sy0; /* screen coordinates */
-int	vindex;
-int	charint;
-
-int sdl_pix, sdl_opix;
-int sdl_bpp = pro_sdl_overlay_data->format->BytesPerPixel;
-
-
-	charint = ((int)ch) - PRO_FONT_FIRSTCHAR;
-	if ((charint < 0) || (charint>(PRO_FONT_NUMCHARS-1)))
-	  charint = 32 - PRO_FONT_FIRSTCHAR;
-
-	sx0 = x * 12;
-	sy0 = y * 10;
-
-	/* Render character */
-
-	for(y=0; y<10; y++)
-	{
-	  sy = sy0 + y;
-
-	  for(x=0; x<12; x++)
-	  {
-	    sx = sx0 + x;
-
-	    /* Set color */
-	    if (((pro_overlay_font[font][charint][y] >> (11-x)) & 01) == 0) {
-	      sdl_pix = sdl_blackpixel;
-	    } else {
-	      sdl_pix = sdl_whitepixel;
-	    }
-
-	    /* Plot pixel */
-	    /* Perform XNOR, if required */
-	    if (xnor == 1)
-	    {
-	      Uint8 *p = (Uint8 *)pro_sdl_overlay_data->pixels + sy * pro_sdl_overlay_data->pitch + sx * sdl_bpp;
-	      switch(sdl_bpp) {
-	        case 1:
-	          sdl_opix = *p;
-	          break;
-	        case 2:
-	          sdl_opix = *(Uint16 *)p;
-	          break;
-	        case 3:
-	          if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
-	        	sdl_opix = p[0] << 16 | p[1] << 8 | p[2];
-	          else
-	        	sdl_opix = p[0] | p[1] << 8 | p[2] << 16;
-	          break;
-	        case 4:
-	          sdl_opix = *(Uint32 *)p;
-	          break;
-	        default:
-	          sdl_opix = 0;       /* shouldn't happen, but avoids warnings */
-	          break;
-	      }
-
-	      if (sdl_opix == sdl_blackpixel) {
-	    	if (sdl_pix == sdl_blackpixel)
-	    	  sdl_pix = sdl_whitepixel;
-	    	else
-		      sdl_pix = sdl_blackpixel;
-	      }
-	    }
-
-	    /* Write pixel into frame buffer */
-
-	    Uint8 *p = (Uint8 *)pro_sdl_overlay_data->pixels + sy * pro_sdl_overlay_data->pitch + sx * sdl_bpp;
-	    switch(sdl_bpp) {
-	      case 1:
-	        *p = sdl_pix;
-	        break;
-	      case 2:
-	        *(Uint16 *)p = sdl_pix;
-	        break;
-	      case 3:
-	        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-	          p[0] = (sdl_pix >> 16) & 0xff;
-	          p[1] = (sdl_pix >> 8) & 0xff;
-	          p[2] = sdl_pix & 0xff;
-	        } else {
-	          p[0] = sdl_pix & 0xff;
-	          p[1] = (sdl_pix >> 8) & 0xff;
-	          p[2] = (sdl_pix >> 16) & 0xff;
-	        }
-	        break;
-	      case 4:
-	          *(Uint32 *)p = sdl_pix;
-	          break;
-	    }
-
-	    /* Mark display cache entry invalid */
-	    vindex = vmem((sy<<6) | ((sx>>4)&077));
-	    pro_vid_mvalid[cmem(vindex)] = 0;
-	  }
-	}
-}
-
-
-/* Print text string into overlay frame buffer */
-void pro_sdl_overlay_print(int x, int y, int xnor, int font, char *text)
-{
-int	i, size;
-
-
-	if (pro_overlay_open)
-	{
-	  if (x == -1)
-	    x = start_x;
-	  else if (x == -2)
-	    x = last_x + last_size;
-	  else
-	    start_x = x;
-
-	  if (y == -1)
-	    y = last_y + 1;
-	  else if (y == -2)
-	    y = last_y;
-
-	  if (y > 23)
-	    y = 23;
-
-	  size = strlen(text);
-
-	  for(i=0; i<size; i++)
-	    pro_sdl_overlay_print_char(x+i, y, xnor, font, text[i]);
-
-	  last_x = x;
-	  last_y = y;
-	  last_size = size;
-	}
-}
-
-
-/* Clear the overlay frame buffer */
-void pro_sdl_overlay_clear ()
-{
-	if (pro_overlay_open)
-	{
-	  SDL_FillRect(pro_sdl_overlay_data, NULL, SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, 0));
-	}
-}
-
-
-/* Turn on overlay */
-void pro_sdl_overlay_enable ()
-{
-	pro_sdl_overlay_clear();
-	pro_sdl_overlay_on = 1;
-}
-
-
-/* Turn off overlay */
-void pro_sdl_overlay_disable ()
-{
-	pro_clear_mvalid();
-	pro_sdl_overlay_on = 0;
-}
-
-
-/* Initialize the overlay frame buffer */
-void pro_sdl_overlay_init (int psize, int cmode, int bpixel, int wpixel)
-{
-	if (pro_overlay_open == 0)
-	{
-	  start_x = 0;
-	  last_x = 0;
-	  last_y = 0;
-	  last_size = 0;
-
-	  Uint32 rmask, gmask, bmask, amask;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
-    amask = 0xff000000;
-#endif
-	  pro_sdl_overlay_data = SDL_CreateRGBSurface( (SDL_HWSURFACE | SDL_SRCALPHA), PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, rmask, gmask, bmask, amask);
-
-	  sdl_blackpixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, (255-PRO_OVERLAY_A));
-	  sdl_whitepixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 255, 255, 255, 255);
-
-	  pro_sdl_overlay_on = 0;
-	  pro_overlay_open = 1;
-	}
-}
-
-
-/* Close the overlay frame buffer */
-void pro_sdl_overlay_close ()
-{
-	if (pro_overlay_open)
-	{
-	  SDL_FreeSurface(pro_sdl_overlay_data);
-	  pro_sdl_overlay_on = 0;
-	  pro_overlay_open = 0;
-	}
 }
 
 

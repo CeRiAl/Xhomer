@@ -137,7 +137,7 @@ void ptr_fifo_advance ()
 
 void start_pcl()
 {
-	sprintf(tmpstr, "%c*t%dR%c*r0A", ESC, pro_la50_dpi, ESC);
+	sprintf((char*)tmpstr, "%c*t%dR%c*r0A", ESC, pro_la50_dpi, ESC);
 	ptr_fifo_printf(tmpstr);
 
 	colrcnt = 0;
@@ -151,7 +151,7 @@ void start_pcl()
 
 void end_pcl()
 {
-	sprintf(tmpstr, "%c*rB", ESC);
+	sprintf((char*)tmpstr, "%c*rB", ESC);
 	ptr_fifo_printf(tmpstr);
 }
 
@@ -209,7 +209,7 @@ int	rowrep[2][4] = {{4, 4, 4, 3}, {8, 7, 8, 7}};
 
 	  for(rep=0; rep<rowrep[res][rowrcnt]; rep++)
 	  {
-  	    sprintf(tmpstr, "%c*b%dW", ESC, ocolmax);
+  	    sprintf((char*)tmpstr, "%c*b%dW", ESC, ocolmax);
 	    ptr_fifo_printf(tmpstr);
 
   	    for(ocol8=0; ocol8<ocolmax; ocol8++)
