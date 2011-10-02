@@ -745,8 +745,10 @@ GLOBAL int reg_wr(int data, int pa, int access);
 
 /* term_x11.c / term_ncurses.h */
 
+#ifdef HAS_X11
 GLOBAL int pro_nine_workaround;
 GLOBAL int pro_libc_workaround;
+#endif
 GLOBAL int pro_window_x;
 GLOBAL int pro_window_y;
 GLOBAL int pro_screen_full;
@@ -779,14 +781,8 @@ GLOBAL void pro_screen_reset(void);
 GLOBAL void pro_screen_title(char *title);
 GLOBAL void pro_screen_service_events(void);
 
-/* term_overlay_x11.c / term_ncurses.h */
+/* term_generic.h */
 
-GLOBAL int pro_overlay_on;
-GLOBAL unsigned char *pro_overlay_data;
-GLOBAL unsigned char *pro_overlay_alpha;
 GLOBAL void pro_overlay_print(int x, int y, int xnor, int font, char *text);
-GLOBAL void pro_overlay_clear(void);
 GLOBAL void pro_overlay_enable(void);
 GLOBAL void pro_overlay_disable(void);
-GLOBAL void pro_overlay_init(int psize, int cmode, int bpixel, int wpixel);
-GLOBAL void pro_overlay_close(void);

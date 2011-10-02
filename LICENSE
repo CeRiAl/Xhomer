@@ -47,10 +47,12 @@ to include:
   pro_serial.c
   pro_version.h
   pro_vid.c
-  term_overlay_x11.c
+  term_gfx.h
+  term_generic.c
   term_x11.c
   term_curses.c
   term_fonthash_curses.c
+  term_sdl.c
   convert_roms.c
   lbn2xhomer.c
   venix2xhomer.c

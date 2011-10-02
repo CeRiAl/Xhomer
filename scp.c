@@ -44,7 +44,9 @@
 #include "pro_defs.h"
 #endif
 
+#ifdef HAS_SDL
 #include <SDL.h>
+#endif
 
 extern char sim_name[];
 extern DEVICE *sim_devices[];

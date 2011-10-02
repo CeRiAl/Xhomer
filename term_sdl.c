@@ -21,6 +21,8 @@
 
 #ifdef PRO
 
+#ifdef HAS_SDL
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -35,21 +37,12 @@
 
 #include "pro_font.h"
 
+#include "term_gfx.h"
+
+
 #define	PRO_KEYBOARD_FIFO_DEPTH	1024
 
 /* Dummy values copied from term_x11.c - required so xhomer can compile. */
-int	pro_nine_workaround = 0;		/* workaround for #9 Xserver bugs */
-int	pro_libc_workaround = 0;		/* workaround for pre-glibc-2.0 bug */
-int	pro_screen_framebuffers = 1;	/* number of DGA framebuffers (1..3) */
-int	pro_screen_full = 0;			/* 0 = window, 1 = full-screen */
-int	pro_screen_full_scale = 2;		/* vertical DGA scale factor */
-
-int	pro_window_x = 0;				/* window x position */
-int	pro_window_y = 0;				/* window y position */
-int	pro_screen_window_scale = 2;	/* vertical window scale factor */
-int	pro_screen_gamma = 10;			/* 10x gamma correction factor */
-int	pro_screen_pcm = 1;				/* 0 = don't use PCM, 1 = use PCM (private color map) */
-
 LOCAL int	pro_screen_open = 0;
 LOCAL int	pro_screen_winheight;		/* height of framebuffer */
 LOCAL int	pro_screen_bufheight;		/* height of allocated framebuffer */
@@ -58,13 +51,6 @@ LOCAL int	pro_screen_updateheight;	/* height to update */
 LOCAL int	pro_keyboard_fifo_h;		/* FIFO head pointer */
 LOCAL int	pro_keyboard_fifo_t;		/* FIFO tail pointer */
 LOCAL int	pro_keyboard_fifo[PRO_KEYBOARD_FIFO_DEPTH];
-
-int	pro_mouse_x = 0;		/* mouse x */
-int	pro_mouse_y = 0;		/* mouse y */
-int	pro_mouse_l = 0;		/* left mouse button */
-int	pro_mouse_m = 0;		/* middle mouse button */
-int	pro_mouse_r = 0;		/* right mouse button */
-int	pro_mouse_in = 0;		/* mouse in window */
 
 LOCAL SDL_Color	ProSDLColor_map[8];
 LOCAL SDL_Color	ProSDLColor_nonmap[8];
@@ -85,7 +71,7 @@ LOCAL SDL_Color	*pro_sdl_lut;			/* points to nonmap or colormap */
 LOCAL char* current_title = NULL;
 LOCAL int title_needs_update = 0;
 
-int	pro_overlay_on = 0;
+LOCAL int	pro_sdl_overlay_on = 0;
 
 LOCAL int	pro_overlay_open = 0;
 LOCAL int	start_x;
@@ -97,7 +83,7 @@ LOCAL int	sdl_blackpixel;
 LOCAL int	sdl_whitepixel;
 
 /* Put a title on the display window */
-void pro_screen_title (char *title)
+void pro_sdl_screen_title (char *title)
 {
 	if (current_title)
 		free(current_title);
@@ -252,7 +238,7 @@ LOCAL void pro_keyboard_fifo_put (int key)
 
 
 /* External keyboard polling routine */
-int pro_keyboard_get ()
+int pro_sdl_keyboard_get ()
 {
 int	key;
 	
@@ -274,7 +260,7 @@ int	key;
 
 
 /* Save keymap */
-void pro_screen_save_keys ()
+void pro_sdl_screen_save_keys ()
 {
 int	i;
 int	keys[SDLK_LAST];
@@ -289,7 +275,7 @@ int	keys[SDLK_LAST];
 
 /* Bring emulator state up to date with shift/ctrl key state that may have changed
    while focus was lost */
-void pro_screen_update_keys ()
+void pro_sdl_screen_update_keys ()
 {
 int	i, key, oldkey, curkey;
 int	keys[SDLK_LAST];
@@ -318,7 +304,7 @@ int	keys[SDLK_LAST];
 
 
 /* Initialize the display */
-int pro_screen_init ()
+int pro_sdl_screen_init ()
 {
 char	window_pos_env[256];
 
@@ -358,10 +344,10 @@ char	window_pos_env[256];
 	  SDL_Flip(ProSDLScreen);
 
 	  // Make emulator state consistent with keyboard state
-	  pro_screen_update_keys();
+	  pro_sdl_screen_update_keys();
 
 	  // Initialize the overlay frame buffer
-	  pro_overlay_init(0, 0, 0, 0);
+	  pro_sdl_overlay_init(0, 0, 0, 0);
 
 	  pro_screen_open = 1;
 
@@ -376,27 +362,27 @@ char	window_pos_env[256];
 }
 
 
-void pro_screen_close ()
+void pro_sdl_screen_close ()
 {
 	if (pro_screen_open)
 	{
 		pro_screen_open = 0;
 
 		/* Save keymap */
-		pro_screen_save_keys();
+		pro_sdl_screen_save_keys();
 
 		SDL_FreeSurface (pro_sdl_image);
 
 		SDL_FreeSurface (ProSDLScreen);
 
 		/* Close the overlay frame buffer */
-		pro_overlay_close();
+		pro_sdl_overlay_close();
 	}
 }
 
 
 /* Reset routine (called only once) */
-void pro_screen_reset ()
+void pro_sdl_screen_reset ()
 {
 int	r, g, b, i;
 
@@ -423,14 +409,14 @@ int	r, g, b, i;
 
 
 /* This function is called whenever the colormap mode changes. */
-void pro_mapchange ()
+void pro_sdl_mapchange ()
 {
 	pro_clear_mvalid();
 }
 
 
 /* This writes an 8-bit (3-3-2) RGB value into the PRO's colormap */
-void pro_colormap_write (int index, int rgb)
+void pro_sdl_colormap_write (int index, int rgb)
 {
 double	r, g, b;
 
@@ -460,14 +446,14 @@ double	r, g, b;
 
 
 /* This is called whenever the scroll register changes */
-void pro_scroll ()
+void pro_sdl_scroll ()
 {
 	  pro_clear_mvalid();
 }
 
 
 /* This is called every emulated vertical retrace */
-void pro_screen_update ()
+void pro_sdl_screen_update ()
 {
 int	i, vdata0, vdata1, vdata2, vindex, vpix, vpixs, vpixe, x, y;
 int	cindex;
@@ -480,7 +466,7 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 
 	/* Service X events */
 
-	pro_screen_service_events();
+	pro_sdl_screen_service_events();
 
 	offset = 0;
 	reps = 1;
@@ -530,7 +516,7 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 
 	      if (pro_vid_mvalid[cmem(vindex)] == 0)
 	      {
-	      if (pro_overlay_on == 0)
+	      if (pro_sdl_overlay_on == 0)
 	        for(i=0; i<(PRO_VID_CLS_PIX/16); i++)
 	          {
 	            vpixs = i * 16;
@@ -635,7 +621,7 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 		    sdl_dstrect.w = PRO_VID_CLS_PIX;
 		    sdl_dstrect.h = 1;
 
-		    if (pro_overlay_on == 1)
+		    if (pro_sdl_overlay_on == 1)
 		      SDL_BlitSurface(pro_sdl_overlay_data, NULL, pro_sdl_image, NULL);
 
 		    SDL_BlitSurface(pro_sdl_image, &sdl_srcrect, ProSDLScreen, &sdl_dstrect);
@@ -664,7 +650,7 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 
 
 /* Set keyboard bell volume */
-void pro_keyboard_bell_vol (int vol)
+void pro_sdl_keyboard_bell_vol (int vol)
 {
 	/* vol is in the range 0 (loudest) to 7 (softest) */
 //	pro_keyboard_control.bell_percent = (100*(7-vol))/7;
@@ -674,7 +660,7 @@ void pro_keyboard_bell_vol (int vol)
 
 
 /* Sound keyboard bell */
-void pro_keyboard_bell ()
+void pro_sdl_keyboard_bell ()
 {
 //	XBell(ProDisplay, 0);
 
@@ -683,7 +669,7 @@ void pro_keyboard_bell ()
 
 
 /* Turn off auto-repeat */
-void pro_keyboard_auto_off ()
+void pro_sdl_keyboard_auto_off ()
 {
 //	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOff;
 
@@ -692,7 +678,7 @@ void pro_keyboard_auto_off ()
 
 
 /* Turn on auto-repeat */
-void pro_keyboard_auto_on ()
+void pro_sdl_keyboard_auto_on ()
 {
 //	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOn;
 
@@ -701,7 +687,7 @@ void pro_keyboard_auto_on ()
 
 
 /* Turn off keyclick */
-void pro_keyboard_click_off ()
+void pro_sdl_keyboard_click_off ()
 {
 //	pro_keyboard_control.key_click_percent = 0;
 
@@ -710,7 +696,7 @@ void pro_keyboard_click_off ()
 
 
 /* Turn on keyclick */
-void pro_keyboard_click_on ()
+void pro_sdl_keyboard_click_on ()
 {
 //	pro_keyboard_control.key_click_percent = 100;
 
@@ -719,7 +705,7 @@ void pro_keyboard_click_on ()
 
 
 /* Service X events */
-void pro_screen_service_events ()
+void pro_sdl_screen_service_events ()
 {
 SDL_Event sdl_event;
 int		sdl_expose = 0;
@@ -777,9 +763,9 @@ int		key;
 			case SDL_ACTIVEEVENT:
 				if (sdl_event.active.gain) {
 			        pro_mouse_in = 1;
-			        pro_screen_update_keys();
+			        pro_sdl_screen_update_keys();
 				} else {
-			        pro_screen_save_keys();
+			        pro_sdl_screen_save_keys();
 			        pro_mouse_in = 0;
 				}
 				break;
@@ -807,7 +793,7 @@ int		key;
    xnor = 1 -> xnor mode */
 
 /* prints 12x10 characters */
-LOCAL void pro_overlay_print_char(int x, int y, int xnor, int font, char ch)
+LOCAL void pro_sdl_overlay_print_char(int x, int y, int xnor, int font, char ch)
 {
 int	sx, sy, sx0, sy0; /* screen coordinates */
 int	vindex;
@@ -910,7 +896,7 @@ int sdl_bpp = pro_sdl_overlay_data->format->BytesPerPixel;
 
 
 /* Print text string into overlay frame buffer */
-void pro_overlay_print(int x, int y, int xnor, int font, char *text)
+void pro_sdl_overlay_print(int x, int y, int xnor, int font, char *text)
 {
 int	i, size;
 
@@ -935,7 +921,7 @@ int	i, size;
 	  size = strlen(text);
 
 	  for(i=0; i<size; i++)
-	    pro_overlay_print_char(x+i, y, xnor, font, text[i]);
+	    pro_sdl_overlay_print_char(x+i, y, xnor, font, text[i]);
 
 	  last_x = x;
 	  last_y = y;
@@ -945,7 +931,7 @@ int	i, size;
 
 
 /* Clear the overlay frame buffer */
-void pro_overlay_clear ()
+void pro_sdl_overlay_clear ()
 {
 	if (pro_overlay_open)
 	{
@@ -955,23 +941,23 @@ void pro_overlay_clear ()
 
 
 /* Turn on overlay */
-void pro_overlay_enable ()
+void pro_sdl_overlay_enable ()
 {
-	pro_overlay_clear();
-	pro_overlay_on = 1;
+	pro_sdl_overlay_clear();
+	pro_sdl_overlay_on = 1;
 }
 
 
 /* Turn off overlay */
-void pro_overlay_disable ()
+void pro_sdl_overlay_disable ()
 {
 	pro_clear_mvalid();
-	pro_overlay_on = 0;
+	pro_sdl_overlay_on = 0;
 }
 
 
 /* Initialize the overlay frame buffer */
-void pro_overlay_init (int psize, int cmode, int bpixel, int wpixel)
+void pro_sdl_overlay_init (int psize, int cmode, int bpixel, int wpixel)
 {
 	if (pro_overlay_open == 0)
 	{
@@ -997,22 +983,59 @@ void pro_overlay_init (int psize, int cmode, int bpixel, int wpixel)
 	  sdl_blackpixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, (255-PRO_OVERLAY_A));
 	  sdl_whitepixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 255, 255, 255, 255);
 
-	  pro_overlay_on = 0;
+	  pro_sdl_overlay_on = 0;
 	  pro_overlay_open = 1;
 	}
 }
 
 
 /* Close the overlay frame buffer */
-void pro_overlay_close ()
+void pro_sdl_overlay_close ()
 {
 	if (pro_overlay_open)
 	{
 	  SDL_FreeSurface(pro_sdl_overlay_data);
-	  pro_overlay_on = 0;
+	  pro_sdl_overlay_on = 0;
 	  pro_overlay_open = 0;
 	}
 }
 
+
+/* Initialize this driver */
+void pro_sdl_gfx_driver_init ()
+{
+	printf("Xhomer SDL Driver\r\n");
+}
+
+
+/* Graphic driver info and description */
+pro_gfx_driver_t	pro_sdl_driver = {
+	{"Xhomer SDL Driver"},
+	pro_sdl_gfx_driver_init,
+
+	pro_sdl_keyboard_get,
+	pro_sdl_keyboard_click_on,
+	pro_sdl_keyboard_click_off,
+	pro_sdl_keyboard_auto_on,
+	pro_sdl_keyboard_auto_off,
+	pro_sdl_keyboard_bell,
+	pro_sdl_keyboard_bell_vol,
+
+	pro_sdl_overlay_enable,
+	pro_sdl_overlay_disable,
+	pro_sdl_overlay_print,
+
+	pro_sdl_screen_init,
+	pro_sdl_screen_close,
+	pro_sdl_screen_title,
+	pro_sdl_screen_update,
+	pro_sdl_screen_reset,
+	pro_sdl_scroll,
+
+	pro_sdl_mapchange,
+	pro_sdl_colormap_write
+};
+
+#endif /* HAS_SDL */
 
 #endif

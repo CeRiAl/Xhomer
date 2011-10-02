@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "term_gfx.h"
+
 #ifdef __hpux__
 #define seteuid(euid) setresuid(-1,(euid),-1)
 #endif
@@ -633,6 +635,32 @@ char		*strtmp;
 	            error = 1;
 		}
 
+	    /* Graphics driver selection */
+
+		else if (scmp(stra, "gfx_driver", -1, 1, 1, numpar) > -1)
+		{
+#ifdef HAS_CURSES
+			  if (scmp(strv[0], "curses", -1, 1, 1, 1) > -1)
+				  pro_gfx_current_driver = &pro_curses_driver;
+			  else
+#endif
+#ifdef HAS_SDL
+			  if (scmp(strv[0], "sdl", -1, 1, 1, 1) > -1)
+				  pro_gfx_current_driver = &pro_sdl_driver;
+			  else
+#endif
+#ifdef HAS_X11
+			  if (scmp(strv[0], "x11", -1, 1, 1, 1) > -1)
+				  pro_gfx_current_driver = &pro_x11_driver;
+			  else
+#endif
+				error = 1;
+		}
+
+
+
+
+#ifdef HAS_X11
 		else if (scmp(stra, "nine_workaround", -1, 1, 1, numpar) > -1)
 		{
 	          if (scmp(strv[0], "off", -1, 1, 1, 1) > -1)
@@ -652,6 +680,7 @@ char		*strtmp;
 	          else
 	            error = 1;
 		}
+#endif
 
 		else if (scmp(stra, "lp_workaround", -1, 1, 1, numpar) > -1)
 		{
@@ -685,6 +714,7 @@ char		*strtmp;
 	  fclose(fptr);
 	}
 
+	pro_gfx_drivers_init();
 
 	pro_eq_reset();
 

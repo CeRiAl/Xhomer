@@ -52,6 +52,8 @@
 
 #ifdef PRO
 
+#ifdef HAS_X11
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -76,19 +78,17 @@
 #include "pro_defs.h"
 #include "pro_lk201.h"
 
+#include "pro_font.h"
+
+#include "term_gfx.h"
 
 #define	PRO_KEYBOARD_FIFO_DEPTH	1024
 
 int			pro_nine_workaround = 0;	/* workaround for #9 Xserver bugs */
 int			pro_libc_workaround = 0;	/* workaround for pre-glibc-2.0 bug */
-int			pro_window_x = 0;		/* window x position */
-int			pro_window_y = 0;		/* window y position */
-int			pro_screen_full = 0;		/* 0 = window, 1 = full-screen */
-int			pro_screen_window_scale = 2;	/* vertical window scale factor */
-int			pro_screen_full_scale = 3;	/* vertical DGA scale factor */
-int			pro_screen_gamma = 10;		/* 10x gamma correction factor */
-int			pro_screen_pcm = 1;		/* 0 = don't use PCM, 1 = use PCM (private color map) */
-int			pro_screen_framebuffers = 0;	/* number of DGA framebuffers (1..3 or 0 to auto-detect) */
+LOCAL int			pro_x11_overlay_on = 0;
+LOCAL unsigned char		*pro_overlay_data;	/* overlay frame buffer */
+LOCAL unsigned char		*pro_overlay_alpha;	/* overlay frame buffer alpha */
 
 LOCAL int		pro_screen_open = 0;
 LOCAL int		pro_screen_winheight;		/* height of framebuffer */
@@ -98,13 +98,6 @@ LOCAL int		pro_screen_updateheight;	/* height to update */
 LOCAL int		pro_keyboard_fifo_h;		/* FIFO head pointer */
 LOCAL int		pro_keyboard_fifo_t;		/* FIFO tail pointer */
 LOCAL int		pro_keyboard_fifo[PRO_KEYBOARD_FIFO_DEPTH];
-
-int			pro_mouse_x = 0;		/* mouse x */
-int			pro_mouse_y = 0;		/* mouse y */
-int			pro_mouse_l = 0;		/* left mouse button */
-int			pro_mouse_m = 0;		/* middle mouse button */
-int			pro_mouse_r = 0;		/* right mouse button */
-int			pro_mouse_in = 0;		/* mouse in window */
 
 LOCAL Display		*ProDisplay;			/* pointer to the display */
 LOCAL int		ProScreen;
@@ -185,13 +178,229 @@ LOCAL int XShmErrorHandler(Display *dpy, XErrorEvent *xev)
 }
 #endif
 
+LOCAL int		pro_overlay_open = 0;
+LOCAL int		clutmode;
+LOCAL int		pixsize;
+LOCAL int		blackpixel;
+LOCAL int		whitepixel;
+LOCAL int		overlay_a;
+LOCAL int		start_x;
+LOCAL int		last_x;
+LOCAL int		last_y;
+LOCAL int		last_size;
+
+/* Print a single character into overlay frame buffer */
+
+/* x = 0..79  y= 0..23 */
+
+/* xnor = 0 -> replace mode
+   xnor = 1 -> xnor mode */
+
+/* prints 12x10 characters */
+
+LOCAL void pro_x11_overlay_print_char(int x, int y, int xnor, int font, char ch)
+{
+int	sx, sy, sx0, sy0; /* screen coordinates */
+int	i, pix, pnum, opix, vindex;
+int	charint;
+
+
+	charint = ((int)ch) - PRO_FONT_FIRSTCHAR;
+	if ((charint < 0) || (charint>(PRO_FONT_NUMCHARS-1)))
+	  charint = 32 - PRO_FONT_FIRSTCHAR;
+
+	sx0 = x * 12;
+	sy0 = y * 10;
+
+	/* Render character */
+
+	for(y=0; y<10; y++)
+	{
+	  sy = sy0 + y;
+
+	  for(x=0; x<12; x++)
+	  {
+	    sx = sx0 + x;
+
+	    /* Set color */
+
+	    if (((pro_overlay_font[font][charint][y] >> (11-x)) & 01) == 0)
+	      pix = blackpixel;
+	    else
+	      pix = whitepixel;
+
+	    /* Plot pixel */
+
+	    pnum = sy*PRO_VID_SCRWIDTH+sx;
+
+	    /* Perform XNOR, if required */
+
+	    if (xnor == 1)
+	    {
+	      /* Get old pixel value */
+
+	      opix = 0;
+
+	      for(i=0; i<pixsize; i++)
+	        opix |= pro_overlay_data[pixsize*pnum+i] << (i*8);
+
+	      if (opix == blackpixel)
+	      {
+	        if (pix == blackpixel)
+	          pix = whitepixel;
+	        else
+	          pix = blackpixel;
+	      }
+	    }
+
+	    /* Assign alpha based on color */
+
+	    if (pix == blackpixel)
+	      pro_overlay_alpha[sy*PRO_VID_SCRWIDTH+sx] = overlay_a;
+	    else
+	      /* Make white pixels non-transparent */
+
+	      pro_overlay_alpha[sy*PRO_VID_SCRWIDTH+sx] = PRO_OVERLAY_MAXA;
+
+	    /* Write pixel into frame buffer */
+
+	    for(i=0; i<pixsize; i++)
+	      pro_overlay_data[pixsize*pnum+i] = pix >> (i*8);
+
+	    /* Mark display cache entry invalid */
+
+	    vindex = vmem((sy<<6) | ((sx>>4)&077));
+	    pro_vid_mvalid[cmem(vindex)] = 0;
+	  }
+	}
+}
+
+
+/* Print text string into overlay frame buffer */
+
+void pro_x11_overlay_print(int x, int y, int xnor, int font, char *text)
+{
+int	i, size;
+
+
+	if (pro_overlay_open)
+	{
+	  if (x == -1)
+	    x = start_x;
+	  else if (x == -2)
+	    x = last_x + last_size;
+	  else
+	    start_x = x;
+
+	  if (y == -1)
+	    y = last_y + 1;
+	  else if (y == -2)
+	    y = last_y;
+
+	  if (y > 23)
+	    y = 23;
+
+	  size = strlen(text);
+
+	  for(i=0; i<size; i++)
+	    pro_x11_overlay_print_char(x+i, y, xnor, font, text[i]);
+
+	  last_x = x;
+	  last_y = y;
+	  last_size = size;
+	}
+}
+
+
+/* Clear the overlay frame buffer */
+
+void pro_x11_overlay_clear ()
+{
+int	i, j;
+
+	if (pro_overlay_open)
+	{
+	  for(i=0; i<PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT; i++)
+	  {
+	    for(j=0; j<pixsize; j++)
+	      pro_overlay_data[pixsize*i+j] = blackpixel >> (j*8);
+
+	    pro_overlay_alpha[i] = 0;
+	  }
+	}
+}
+
+
+/* Turn on overlay */
+
+void pro_x11_overlay_enable ()
+{
+	pro_x11_overlay_clear();
+	pro_x11_overlay_on = 1;
+}
+
+
+/* Turn off overlay */
+
+void pro_x11_overlay_disable ()
+{
+	pro_clear_mvalid();
+	pro_x11_overlay_on = 0;
+}
+
+
+/* Initialize the overlay frame buffer */
+
+void pro_x11_overlay_init (int psize, int cmode, int bpixel, int wpixel)
+{
+	if (pro_overlay_open == 0)
+	{
+	  start_x = 0;
+	  last_x = 0;
+	  last_y = 0;
+	  last_size = 0;
+
+	  clutmode = cmode;
+	  pixsize = psize;
+	  blackpixel = bpixel;
+	  whitepixel = wpixel;
+
+	  /* No blending is done in 8-bit modes */
+
+	  if (cmode == 1)
+	    overlay_a = PRO_OVERLAY_MAXA;
+	  else
+	    overlay_a = PRO_OVERLAY_A;
+
+	  pro_overlay_data = (char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT*pixsize);
+	  pro_overlay_alpha = (char *)malloc(PRO_VID_SCRWIDTH*PRO_VID_MEMHEIGHT);
+	  pro_x11_overlay_on = 0;
+	  pro_overlay_open = 1;
+	}
+}
+
+
+/* Close the overlay frame buffer */
+
+void pro_x11_overlay_close ()
+{
+	if (pro_overlay_open)
+	{
+	  free(pro_overlay_data);
+	  free(pro_overlay_alpha);
+	  pro_x11_overlay_on = 0;
+	  pro_overlay_open = 0;
+	}
+}
+
+
 LOCAL char* current_title = NULL;
 LOCAL int title_needs_update = 0;
 
 
 /* Put a title on the display window */
 
-void pro_screen_title (char *title)
+void pro_x11_screen_title (char *title)
 {
           if (current_title)
 	    free(current_title);
@@ -201,7 +410,7 @@ void pro_screen_title (char *title)
 }
 
 
-void pro_screen_clear ()
+void pro_x11_screen_clear ()
 {
 int		i, j, k;
 unsigned char	*mptr;
@@ -221,13 +430,13 @@ unsigned char	*mptr;
 
 /* Save and restore keyboard control settings */
 
-void pro_screen_save_old_keyboard ()
+void pro_x11_screen_save_old_keyboard ()
 {
 	XGetKeyboardControl(ProDisplay, &pro_keyboard_state);
 }
 
 
-void pro_screen_restore_old_keyboard ()
+void pro_x11_screen_restore_old_keyboard ()
 {
 XKeyboardControl	key_control;
 
@@ -244,7 +453,7 @@ XKeyboardControl	key_control;
 }
 
 
-void pro_screen_restore_keyboard ()
+void pro_x11_screen_restore_keyboard ()
 {
 	if (pro_mouse_in == 1)
 	  XChangeKeyboardControl(ProDisplay, KBAutoRepeatMode | KBKeyClickPercent
@@ -407,7 +616,7 @@ LOCAL void pro_keyboard_fifo_put (int key)
 
 /* External keyboard polling routine */
 
-int pro_keyboard_get ()
+int pro_x11_keyboard_get ()
 {
 int	key;
 	
@@ -432,7 +641,7 @@ int	key;
 
 /* Save keymap */
 
-void pro_screen_save_keys ()
+void pro_x11_screen_save_keys ()
 {
 int		i;
 unsigned char	keys[32];
@@ -448,7 +657,7 @@ unsigned char	keys[32];
 /* Bring emulator state up to date with shift/ctrl key state that may have changed
    while focus was lost */
 
-void pro_screen_update_keys ()
+void pro_x11_screen_update_keys ()
 {
 int		i, key, oldkey, curkey;
 unsigned char	keys[32];
@@ -480,7 +689,7 @@ unsigned char	keys[32];
 
 /* Initialize the display */
 
-int pro_screen_init ()
+int pro_x11_screen_init ()
 {
 XSetWindowAttributes	ProWindowAttributes;	/* structure of window attibutes */
 unsigned long		ProWindowMask;		/* mask for window attributes */
@@ -501,6 +710,8 @@ int			revert_to;
 #ifdef DGA
 int			old_uid = geteuid();
 #endif
+
+
 
 
 	if (pro_screen_open == 0)
@@ -968,22 +1179,22 @@ int			old_uid = geteuid();
 
 	  /* Save old keyboard state */
 
-	  pro_screen_save_old_keyboard ();
+	  pro_x11_screen_save_old_keyboard ();
 
 	  /* Restore emulator keyboard state */
 
-	  pro_screen_restore_keyboard();
+	  pro_x11_screen_restore_keyboard();
 
 	  XFlush (ProDisplay);
 
 	  /* Make emulator state consistent with keyboard state */
 
-	  pro_screen_update_keys();
+	  pro_x11_screen_update_keys();
 
 
 	  /* Initialize the overlay frame buffer */
 
-	  pro_overlay_init(pro_screen_pixsize, pro_screen_clutmode,
+	  pro_x11_overlay_init(pro_screen_pixsize, pro_screen_clutmode,
 	                   (int)ProBlackPixel, (int)ProWhitePixel);
 
 	  pro_screen_open = 1;
@@ -1059,7 +1270,7 @@ int			old_uid = geteuid();
 #endif
 	  /* Clear image buffer */
 
-	  pro_screen_clear();
+	  pro_x11_screen_clear();
 
 	  /* Invalidate display cache */
 
@@ -1070,7 +1281,7 @@ int			old_uid = geteuid();
 }
 
 
-void pro_screen_close ()
+void pro_x11_screen_close ()
 {
 /* XXX not currently used - see below
 XWindowAttributes	winattr;
@@ -1095,14 +1306,14 @@ XWindowAttributes	winattr;
 	    printf("3 DDD\r\n");
 
 	  if (pro_mouse_in == 1)
-	    pro_screen_restore_old_keyboard();
+	    pro_x11_screen_restore_old_keyboard();
 
 	  if (pro_libc_workaround)
 	    printf("4 DDD\r\n");
 
 	  /* Save keymap */
 
-	  pro_screen_save_keys();
+	  pro_x11_screen_save_keys();
 
 	  if (pro_libc_workaround)
 	    printf("5 DDD\r\n");
@@ -1207,7 +1418,7 @@ XWindowAttributes	winattr;
 
 	  /* Close the overlay frame buffer */
 
-	  pro_overlay_close();
+	  pro_x11_overlay_close();
 
 	  if (pro_libc_workaround)
 	    printf("19 DDD\r\n");
@@ -1219,7 +1430,7 @@ XWindowAttributes	winattr;
 
 /* Reset routine (called only once) */
 
-void pro_screen_reset ()
+void pro_x11_screen_reset ()
 {
 int	r, g, b, i;
 
@@ -1261,7 +1472,7 @@ int	r, g, b, i;
    A new X11 colormap is loaded for private colormap modes,
    mvalid is cleared otherwise */
 
-void pro_mapchange ()
+void pro_x11_mapchange ()
 {
 XColor	*ProColor;
 
@@ -1282,7 +1493,7 @@ XColor	*ProColor;
 
 /* This writes an 8-bit (3-3-2) RGB value into the PRO's colormap */
 
-void pro_colormap_write (int index, int rgb)
+void pro_x11_colormap_write (int index, int rgb)
 {
 unsigned long	pixel;
 double		r, g, b;
@@ -1344,7 +1555,7 @@ double		r, g, b;
 
 /* This is called whenever the scroll register changes */
 
-void pro_scroll ()
+void pro_x11_scroll ()
 {
 	/* Clear entire display cache if DGA disabled,
 	   or if DGA is using only a single framebuffer */
@@ -1368,7 +1579,7 @@ void pro_scroll ()
 
 /* This is called every emulated vertical retrace */
 
-void pro_screen_update ()
+void pro_x11_screen_update ()
 {
 int		i, vdata0, vdata1, vdata2, vindex, vpix, vpixs, vpixe, x, y;
 int		a, na, opix, pnum, color, cindex;
@@ -1381,7 +1592,7 @@ unsigned char	*image_data;
 
 	/* Service X events */
 
-	pro_screen_service_events();
+	pro_x11_screen_service_events();
 
 	image_data = pro_image_data;
 
@@ -1400,7 +1611,7 @@ unsigned char	*image_data;
 
 	  reps = 2;
 
-	  if (pro_overlay_on == 0)
+	  if (pro_x11_overlay_on == 0)
 	  {
 	    vindex = 0;
 
@@ -1445,7 +1656,7 @@ unsigned char	*image_data;
 	  }
 
 	  pro_old_scroll = cur_scroll;
-	  pro_old_overlay_on = pro_overlay_on;
+	  pro_old_overlay_on = pro_x11_overlay_on;
 	}
 	else
 #endif
@@ -1465,7 +1676,7 @@ unsigned char	*image_data;
 
 #ifdef DGA
 	    if (pro_screen_full)
-	      pro_screen_clear();
+	      pro_x11_screen_clear();
 	    else
 #endif
 	      XClearWindow(ProDisplay, ProWindow);
@@ -1504,7 +1715,7 @@ unsigned char	*image_data;
 
 	      if (pro_vid_mvalid[cmem(vindex)] == 0)
 	      {
-	      if (pro_overlay_on == 0)
+	      if (pro_x11_overlay_on == 0)
 #ifdef DGA
 	        for(j = 1; j >= (3-2*reps); image_data += j*offset, j -= 2)
 	        {
@@ -1665,7 +1876,7 @@ unsigned char	*image_data;
 
 /* Set keyboard bell volume */
 
-void pro_keyboard_bell_vol (int vol)
+void pro_x11_keyboard_bell_vol (int vol)
 {
 	/* XXX This actually seems to change the duration under Linux!? */
 
@@ -1673,7 +1884,7 @@ void pro_keyboard_bell_vol (int vol)
 
 	pro_keyboard_control.bell_percent = (100*(7-vol))/7;
 
-	pro_screen_restore_keyboard();
+	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
 }
@@ -1681,7 +1892,7 @@ void pro_keyboard_bell_vol (int vol)
 
 /* Sound keyboard bell */
 
-void pro_keyboard_bell ()
+void pro_x11_keyboard_bell ()
 {
 	XBell(ProDisplay, 0);
 	XFlush(ProDisplay);
@@ -1690,11 +1901,11 @@ void pro_keyboard_bell ()
 
 /* Turn off auto-repeat */
 
-void pro_keyboard_auto_off ()
+void pro_x11_keyboard_auto_off ()
 {
 	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOff;
 
-	pro_screen_restore_keyboard();
+	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
 }
@@ -1702,11 +1913,11 @@ void pro_keyboard_auto_off ()
 
 /* Turn on auto-repeat */
 
-void pro_keyboard_auto_on ()
+void pro_x11_keyboard_auto_on ()
 {
 	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOn;
 
-	pro_screen_restore_keyboard();
+	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
 }
@@ -1714,11 +1925,11 @@ void pro_keyboard_auto_on ()
 
 /* Turn off keyclick */
 
-void pro_keyboard_click_off ()
+void pro_x11_keyboard_click_off ()
 {
 	pro_keyboard_control.key_click_percent = 0;
 
-	pro_screen_restore_keyboard();
+	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
 }
@@ -1726,11 +1937,11 @@ void pro_keyboard_click_off ()
 
 /* Turn on keyclick */
 
-void pro_keyboard_click_on ()
+void pro_x11_keyboard_click_on ()
 {
 	pro_keyboard_control.key_click_percent = 100;
 
-	pro_screen_restore_keyboard();
+	pro_x11_screen_restore_keyboard();
 
 	XFlush(ProDisplay);
 }
@@ -1738,7 +1949,7 @@ void pro_keyboard_click_on ()
 
 /* The following is a workaround for an x11-hang bug under Linux */
 
-int XCheckMaskEvent_nohang(Display* dpy, long event_mask, XEvent* event)
+LOCAL int XCheckMaskEvent_nohang(Display* dpy, long event_mask, XEvent* event)
 {
    static int checkready = 0;
    static sigset_t checkmask;
@@ -1772,7 +1983,7 @@ int XCheckMaskEvent_nohang(Display* dpy, long event_mask, XEvent* event)
 
 /* Service X events */
 
-void pro_screen_service_events ()
+void pro_x11_screen_service_events ()
 {
 XEvent		event; /* XXX should this be XDGAEvent for DGA2? */
 #ifdef DGAXXX
@@ -1904,19 +2115,19 @@ int		eventtype;
 	    case EnterNotify:
 	      if (pro_mouse_in == 0)
 	      {
-	        pro_screen_save_old_keyboard();
+	        pro_x11_screen_save_old_keyboard();
 	        pro_mouse_in = 1;
-	        pro_screen_restore_keyboard();
-	        pro_screen_update_keys();
+	        pro_x11_screen_restore_keyboard();
+	        pro_x11_screen_update_keys();
 	      }
 	      break;
 
 	    case LeaveNotify:
 	      if (pro_mouse_in == 1)
 	      {
-	        pro_screen_save_keys();
+	        pro_x11_screen_save_keys();
 	        pro_mouse_in = 0;
-	        pro_screen_restore_old_keyboard();
+	        pro_x11_screen_restore_old_keyboard();
 	      }
 	      break;
 	  }
@@ -1935,4 +2146,44 @@ int		eventtype;
 	  pro_clear_mvalid();
 	}
 }
+
+
+/* Initialize this driver */
+
+void pro_x11_gfx_driver_init ()
+{
+	printf("Xhomer X11 Driver\r\n");
+}
+
+
+/* Graphic driver info and description */
+pro_gfx_driver_t	pro_x11_driver = {
+	{"Xhomer X11 Driver"},
+	pro_x11_gfx_driver_init,
+
+	pro_x11_keyboard_get,
+	pro_x11_keyboard_click_on,
+	pro_x11_keyboard_click_off,
+	pro_x11_keyboard_auto_on,
+	pro_x11_keyboard_auto_off,
+	pro_x11_keyboard_bell,
+	pro_x11_keyboard_bell_vol,
+
+	pro_x11_overlay_enable,
+	pro_x11_overlay_disable,
+	pro_x11_overlay_print,
+
+	pro_x11_screen_init,
+	pro_x11_screen_close,
+	pro_x11_screen_title,
+	pro_x11_screen_update,
+	pro_x11_screen_reset,
+	pro_x11_scroll,
+
+	pro_x11_mapchange,
+	pro_x11_colormap_write
+};
+
+#endif /* HAS_X11 */
+
 #endif

@@ -12,37 +12,9 @@
 #   3. make archive
 
 #######
-# The following must be set to Y
-
-PRO = Y
-
-X11DIR = /usr/X11R6
-
-#######
 # Use MIT shared memory in X-windows (for better performance)
 
 USE_SHM = N
-
-#######
-# Curses library (for texthomer only)
-#
-# "texthomer" works better with ncurses.  This is usually the default
-# curses library for Linux, so this often has no effect, but if you
-# are using another platform, you may need to set this to the paths
-# where you have installed ncurses.
-NCURSESINC=/apps/gnu/include/ncurses
-NCURSESLIB=/apps/gnu/lib
-NCURSESLINK=-lcurses -ltermcap
-# NCURSESLINK=-lncurses -ltermcap
-
-#######
-# SDL library (for sdlhomer only)
-#
-# "texthomer" works better with ncurses.  This is usually the default
-# curses library for Linux, so this often has no effect, but if you
-# are using another platform, you may need to set this to the paths
-# where you have installed ncurses.
-USE_SDL = Y
 
 #######
 # Setting this causes the emulated realtime clock to be
@@ -52,7 +24,7 @@ USE_SDL = Y
 USE_RTC = Y
 
 #######
-# Provide extra information in the X-window title bar
+# Provide extra information in the window title bar
 # (at this point, this adds TLB hit statistics)
 
 # USE_EXTRA_STATUS = Y
@@ -65,11 +37,17 @@ USE_RTC = Y
 
 USE_BUILTIN_ROMS = Y
 
+
 #######
 # Do not set the following feature.  it is not fully
 # functional.
 
 # USE_LIMIT = Y
+
+USE_NCURSES = Y
+USE_SDL = Y
+USE_X = Y
+
 
 ################
 # PDP11 features
@@ -83,8 +61,8 @@ CCDEFS += -DPERF_MONITOR
 # CCDEFS += -DIOTRACE
 
 # Set version variable (for later use by make archive)
-
 PRO_VERSION = `cat VERSION`
+
 
 ##########################
 # C-Compiler configuration
@@ -109,133 +87,109 @@ CC += -O3 -Winline -fomit-frame-pointer
 # Here are some more options from the man page but didn't seem to help much.
 # CC += -finline-functions -ffast-math -fexpensive-optimizations
 
-CCDEFS += -DLOCAL=static -DGLOBAL=extern
-
-# Used by pdp11_rp.c and term_x11.c
-CCLINK = -lm
-
 TARGET = $(shell echo `uname -s`-`uname -r | cut -d . -f 1`)
 
-ifeq ($(PRO),Y)
-  CCDEFS += -DPRO
-#  CCLINK += -lX11
+CCINCS =
+CCDEFS += -DLOCAL=static -DGLOBAL=extern -DPRO
+CCLIBS =
+CCLINK = -lm
+CCLINKSTATIC = -static -ldl
 
-  # Some Pro features require extra libraries and defines
 
-  ifeq ($(USE_RTC),Y)
-    CCDEFS += -DRTC
-  endif
+#########################
+# Files (base + graphics)
+SOURCES = $(shell /bin/ls pdp11*.c scp*.c pro*.c)
+SOURCES += term_generic.c term_curses.c term_sdl.c $(shell /bin/ls term*x11.c)
 
-  ifeq ($(USE_LIMIT),Y)
-    CCDEFS += -DLIMIT
-  endif
 
+# Some Pro features require extra libraries and defines
+ifeq ($(USE_RTC),Y)
+  CCDEFS += -DRTC
+endif
+ifeq ($(USE_LIMIT),Y)
+  CCDEFS += -DLIMIT
+endif
+ifeq ($(USE_SHM),Y)
+  CCDEFS += -DSHM
+endif
+ifeq ($(USE_EXTRA_STATUS),Y)
+  CCDEFS += -DEXTRA_STATUS
+endif
+ifeq ($(USE_BUILTIN_ROMS),Y)
+  CCDEFS += -DBUILTIN_ROMS
+endif
+
+
+ifeq ($(USE_NCURSES),Y)
+  CCDEFS += -DHAS_CURSES
+  CCLIBS = -lcurses -ltermcap
+endif
+ifeq ($(USE_SDL),Y)
+  CCINCS += -I/opt/local/include/SDL
+  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
+  CCLIBS += -L/opt/local/lib
+  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
+  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
+endif
+ifeq ($(USE_X),Y)
+  X11DIR = /usr/X11R6
+  CCINCS += -I$(X11DIR)/include -I/usr/X11/include
+  CCDEFS += -DHAS_X11
+  CCLIBS += -L$(X11DIR)/lib -L/usr/X11/lib
+  CCLINK += -lX11
+  
   ifeq ($(USE_SHM),Y)
-    CCDEFS += -DSHM
     CCLINK += -lXext
   endif
-
-  ifeq ($(USE_SDL),Y)
-    CCDEFS += -I/opt/local/include/SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
-  endif
-
-  ifeq ($(USE_EXTRA_STATUS),Y)
-    CCDEFS += -DEXTRA_STATUS
-  endif
-
-  ifeq ($(USE_BUILTIN_ROMS),Y)
-    CCDEFS += -DBUILTIN_ROMS
-  endif
-
-  # Try this as the default place for X11 stuff and ncurses
-
-#  CCINCS = -I$(X11DIR)/include -I/usr/X11/include -I$(NCURSESINC)
-#  CCLIBS = -L$(X11DIR)/lib     -L/usr/X11/lib     -L$(NCURSESLIB)
-
-  CCINCS = -I$(NCURSESINC)
-  CCLIBS = -L$(NCURSESLIB)
-
+    
   # But some vendors put things in non-standard places
-
   ifeq ($(TARGET), HP-UX-A)
     # HP-UX 9
-    CCINCS+=-I/usr/include/X11R5
-    CCLIBS+=-L/usr/lib/X11R5
+    CCINCS += -I/usr/include/X11R5
+    CCLIBS += -L/usr/lib/X11R5
   else
   ifeq ($(TARGET), HP-UX-B)
     # HP-UX 10
-    CCINCS+=-I/usr/include/X11R6
-    CCLIBS+=-L/usr/lib/X11R6
+    CCINCS += -I/usr/include/X11R6
+    CCLIBS += -L/usr/lib/X11R6
   else
   ifeq ($(TARGET), SunOS-5)
-    CCINCS+=-I/usr/openwin/include
-    CCLIBS+=-L/usr/openwin/lib
-    CCLINK+=-lsocket -lnsl
+    CCINCS += -I/usr/openwin/include
+    CCLIBS += -L/usr/openwin/lib
+    CCLINK += -lsocket -lnsl
   endif
   endif
   endif
 endif
 
 ifeq ($(TARGET), SunOS-4)
-  CCDEFS+= -DSUNOS -D__USE_FIXED_PROTOTYPES__ -DEXIT_FAILURE=1 -DEXIT_SUCCESS=0
+  CCDEFS += -DSUNOS -D__USE_FIXED_PROTOTYPES__ -DEXIT_FAILURE=1 -DEXIT_SUCCESS=0
 endif
 
 ###################
-# Files, Rules, etc
+# Rules, etc
 
-SOURCES=$(shell /bin/ls pdp11*.c scp*.c pro*.c)
-SOURCES_XHOMER=$(SOURCES) $(shell /bin/ls term*x11.c)
-SOURCES_TEXTHOMER=$(SOURCES) term_curses.c
-SOURCES_SDLHOMER=$(SOURCES) term_sdl.c
-OBJECTS=$(SOURCES_XHOMER:%.c=%.o)
-OBJECTS_TEXTHOMER=$(SOURCES_TEXTHOMER:%.c=%.o)
-OBJECTS_SDLHOMER=$(SOURCES_SDLHOMER:%.c=%.o)
-PGOBJECTS=$(SOURCES_XHOMER:%.c=%.pg.o)
+OBJECTS = $(SOURCES:%.c=%.o)
 
 %.o:	%.c; $(CC) -DINLINE=inline $(CCINCS) $(CCDEFS) -c $*.c -o $@
-%.pg.o:	%.c; $(CC) -DINLINE=   -pg $(CCINCS) $(CCDEFS) -c $*.c -o $@
 
-all: sdlhomer
+all: xhomer
 
 xhomer: $(OBJECTS)
 	$(CC) $^ $(CCLIBS) $(CCLINK) -o $@
 
 xhomer.static: $(OBJECTS)
-	$(CC) $^ $(CCLIBS) $(CCLINK) -static -ldl -o $@
+	$(CC) $^ $(CCLIBS) $(CCLINK) $(CCLINKSTATIC) -o $@
 	strip $@
-
-texthomer: $(OBJECTS_TEXTHOMER)
-	$(CC) $^ $(CCLIBS) $(NCURSESLINK) -lm -o $@
-
-texthomer.static: $(OBJECTS_TEXTHOMER)
-	$(CC) $^ $(CCLIBS) $(NCURSESLINK) -lm -static -o $@
-	strip $@
-
-sdlhomer: $(OBJECTS_SDLHOMER)
-	$(CC) $^ $(CCLIBS) $(CCLINK) -L/opt/local/lib -lSDLmain -lSDL -Wl,-framework,Cocoa -lm -o $@
-
-sdlhomer.static: $(OBJECTS_SDLHOMER)
-	$(CC) $^ $(CCLIBS) -L/opt/local/lib /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit -lm -static -o $@
-	strip $@
-
-pdp11: $(OBJECTS)
-	$(CC) $^ $(CCLIBS) $(CCLINK) -o $@
-
-pdp11pg: $(PGOBJECTS)
-	$(CC) -pg $^ $(CCLIBS) $(CCLINK) -o $@
-
-saveit: pdp11
-	cp pdp11 pdp11-$(TARGET)
-	strip pdp11-$(TARGET)
 
 date:
-	make_version
+	./make_version
 	@echo -n "#define PRO_VERSION \"" > pro_version.h
 	@echo -n `cat VERSION` >> pro_version.h
 	@echo "\"" >> pro_version.h
 
 archive:
-	make_archive
+	./make_archive
 
 clean:
 	-@rm -f *.o *~ xhomer xhomer.static texthomer texthomer.static sdlhomer sdlhomer.static convert_roms
@@ -244,7 +198,7 @@ dep depend:
 	@egrep -e "# Dependencies" Makefile > /dev/null || \
 	echo "# Dependencies" >> Makefile
 	sed '/^\#\ Dependencies/q' < Makefile > Makefile.New
-	$(CC) -MM $(CCINCS) $(CCDEFS) $(SOURCES_XHOMER) >> Makefile.New
+	$(CC) -MM $(CCINCS) $(CCDEFS) $(SOURCES) >> Makefile.New
 	mv Makefile Makefile.bak
 	mv Makefile.New Makefile
 
@@ -300,12 +254,12 @@ pro_vid.o: pro_vid.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
   pro_config.h
 scp.o: scp.c sim_defs.h pro_defs.h pro_version.h pro_config.h
 scp_tty.o: scp_tty.c sim_defs.h
-term_overlay_x11.o: term_overlay_x11.c pro_defs.h pro_version.h \
-  pro_config.h pro_font.h
-term_x11.o: term_x11.c \
-  pro_defs.h pro_version.h \
-  pro_config.h pro_lk201.h
-term_sdl.o: term_sdl.c \
-  pro_defs.h pro_version.h \
-  pro_config.h pro_lk201.h
+term_generic.o: term_generic.c pro_defs.h pro_version.h pro_config.h \
+  pro_lk201.h term_gfx.h
+term_curses.o: term_curses.c pro_defs.h pro_version.h pro_config.h \
+  pro_lk201.h  term_gfx.h
+term_x11.o: term_x11.c pro_defs.h pro_version.h pro_config.h pro_lk201.h \
+  term_gfx.h
+term_sdl.o: term_sdl.c pro_defs.h pro_version.h pro_config.h pro_lk201.h \
+  term_gfx.h
   

@@ -9,7 +9,7 @@
 #define PRO_FONT_NUMCHARS	104
 
 
-const short pro_overlay_font[2][PRO_FONT_NUMCHARS][10] =
+LOCAL const short pro_overlay_font[2][PRO_FONT_NUMCHARS][10] =
 	{
 	{
 	{0xaaa, 0x800, 0x800, 0x800, 0x800, 0x800, 0x800, 0x800, 0x800, 0x800},

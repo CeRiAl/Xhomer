@@ -42,6 +42,8 @@
 
 #ifdef PRO
 
+#ifdef HAS_CURSES
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -51,7 +53,8 @@
 #include "pro_defs.h"
 #include "pro_lk201.h"
 
-#define	PRO_KEYBOARD_FIFO_DEPTH	1024
+#include "term_gfx.h"
+
 
 #define PRO_FONT_SCANLINES 10
 
@@ -62,26 +65,6 @@
 #define CNTR(c) (1-'A'+c)
 #define CNTR_F1 03776 /* Any unused keycode will do. */
 
-
-/* Dummy values copied from term_x11.c - required so xhomer can compile. */
-int                     pro_nine_workaround = 0;        /* workaround for #9 Xserver bugs */
-int                     pro_libc_workaround = 0;        /* workaround for pre-glibc-2.0 bug */
-int			pro_window_x = 0;	/* window x position */
-int			pro_window_y = 0;	/* window y position */
-int			pro_screen_full = 0;	/* 0 = window, 1 = full-screen */
-int			pro_screen_window_scale = 2;	/* vertical window scale factor */
-int			pro_screen_full_scale = 2;	/* vertical DGA scale factor */
-int                     pro_screen_gamma = 10;          /* 10x gamma correction factor */
-int                     pro_screen_pcm = 1;             /* 0 = don't use PCM, 1 = use PCM (private color map) */
-int                     pro_screen_framebuffers = 1;    /* number of DGA framebuffers (1..3)
-							 */
-
-int			pro_mouse_x = 0;	/* mouse x */
-int			pro_mouse_y = 0;	/* mouse y */
-int			pro_mouse_l = 0;	/* left mouse button */
-int			pro_mouse_m = 0;	/* middle mouse button */
-int			pro_mouse_r = 0;	/* right mouse button */
-int			pro_mouse_in = 0;	/* mouse in window */
 
 LOCAL int		pro_screen_blank = 0;	/* indicates whether screen is blanked */
 
@@ -96,7 +79,7 @@ LOCAL int               f1_equals_control_f1 = 0;
 
 /* Put a title on the display window */
 
-void pro_screen_title (char *title)
+void pro_curses_screen_title (char *title)
 {
    if (titlebar_ok)
       fprintf(stderr, "\033]2;%s\a", title);
@@ -113,7 +96,7 @@ LOCAL void update ()
    doupdate();
 }
 
-void pro_screen_clear ()
+LOCAL void pro_curses_screen_clear ()
 {
    wclear(main_window);
    update();
@@ -360,7 +343,7 @@ LOCAL int keyboard_get ()
    }
 }
 
-int pro_keyboard_get ()
+int pro_curses_keyboard_get ()
 {
    return pro_menu(keyboard_get());
 }
@@ -395,7 +378,7 @@ LOCAL int pro_screen_init_curses ()
    return PRO_SUCCESS;
 }
 
-int pro_screen_init ()
+int pro_curses_screen_init ()
 {
    const char* term;
    static char termvar[256];
@@ -424,7 +407,7 @@ int pro_screen_init ()
 
    /* Clear image buffer */
    
-   pro_screen_clear();
+   pro_curses_screen_clear();
    
    /* Invalidate display cache */
    
@@ -434,14 +417,14 @@ int pro_screen_init ()
 }
 
 
-void pro_screen_close ()
+void pro_curses_screen_close ()
 {
    endwin();
 }
 
 /* Reset routine (called only once) */
 
-void pro_screen_reset ()
+void pro_curses_screen_reset ()
 {
    /* %%% */
 }
@@ -451,12 +434,12 @@ void pro_screen_reset ()
    A new X11 colormap is loaded for private colormap modes,
    mvalid is cleared otherwise */
 
-void pro_mapchange ()
+void pro_curses_mapchange ()
 {
    /* === TODO: Support colors with ncurses? */
 }
 
-void pro_colormap_write (int index, int rgb)
+void pro_curses_colormap_write (int index, int rgb)
 {
    /* === TODO: Support colors with ncurses? */
 }
@@ -464,7 +447,7 @@ void pro_colormap_write (int index, int rgb)
 
 /* This is called whenever the scroll register changes */
 
-void pro_scroll ()
+void pro_curses_scroll ()
 {
    /* Clear entire display cache for now %%% */
    pro_clear_mvalid();
@@ -475,7 +458,7 @@ void pro_scroll ()
 
 #include "term_fonthash_curses.c"
 
-void pro_screen_update ()
+void pro_curses_screen_update ()
 {
    int x, y, i;
    int vindex = vmem(0);
@@ -489,7 +472,7 @@ void pro_screen_update ()
       {
 	 /* Blank the screen */
 	 /* %%% */
-	 pro_screen_clear();
+	 pro_curses_screen_clear();
 	 pro_screen_blank = 1;
       }
    }
@@ -692,7 +675,7 @@ void pro_screen_update ()
 
 /* Set keyboard bell volume */
 
-void pro_keyboard_bell_vol (int vol)
+void pro_curses_keyboard_bell_vol (int vol)
 {
    /* Not implemented for curses */
 }
@@ -700,7 +683,7 @@ void pro_keyboard_bell_vol (int vol)
 
 /* Sound keyboard bell */
 
-void pro_keyboard_bell ()
+void pro_curses_keyboard_bell ()
 {
    fputc('\a', stderr);
 }
@@ -708,7 +691,7 @@ void pro_keyboard_bell ()
 
 /* Turn off auto-repeat */
 
-void pro_keyboard_auto_off ()
+void pro_curses_keyboard_auto_off ()
 {
    /* Not implemented for curses */
 }
@@ -716,7 +699,7 @@ void pro_keyboard_auto_off ()
 
 /* Turn on auto-repeat */
 
-void pro_keyboard_auto_on ()
+void pro_curses_keyboard_auto_on ()
 {
    /* Not implemented for curses */
 }
@@ -724,7 +707,7 @@ void pro_keyboard_auto_on ()
 
 /* Turn off keyclick */
 
-void pro_keyboard_click_off ()
+void pro_curses_keyboard_click_off ()
 {
    /* Not implemented for curses */
 }
@@ -732,12 +715,12 @@ void pro_keyboard_click_off ()
 
 /* Turn on keyclick */
 
-void pro_keyboard_click_on ()
+void pro_curses_keyboard_click_on ()
 {
    /* Not implemented for curses */
 }
 
-void pro_overlay_print(int x, int y, int xnor, int font, char *text)
+void pro_curses_overlay_print(int x, int y, int xnor, int font, char *text)
 {
    if (!overlay_window) return;
    if (font) wattron(overlay_window, A_BOLD);
@@ -771,7 +754,7 @@ void pro_overlay_print(int x, int y, int xnor, int font, char *text)
    return;
 }
 
-void pro_overlay_disable ()
+void pro_curses_overlay_disable ()
 {
    if (!overlay_window) return;
    delwin(overlay_window);
@@ -780,10 +763,48 @@ void pro_overlay_disable ()
    update();
 }
 
-void pro_overlay_enable ()
+void pro_curses_overlay_enable ()
 {
-   pro_overlay_disable();
+   pro_curses_overlay_disable();
    overlay_window = newwin(0, 0, 0, 0);
 }
+
+
+/* Initialize this driver */
+void pro_curses_gfx_driver_init ()
+{
+	printf("Xhomer (n)curses Driver\r\n");
+}
+
+
+/* Graphic driver info and description */
+pro_gfx_driver_t	pro_curses_driver = {
+	{"Xhomer (n)curses Driver"},
+	pro_curses_gfx_driver_init,
+
+	pro_curses_keyboard_get,
+	pro_curses_keyboard_click_on,
+	pro_curses_keyboard_click_off,
+	pro_curses_keyboard_auto_on,
+	pro_curses_keyboard_auto_off,
+	pro_curses_keyboard_bell,
+	pro_curses_keyboard_bell_vol,
+
+	pro_curses_overlay_enable,
+	pro_curses_overlay_disable,
+	pro_curses_overlay_print,
+
+	pro_curses_screen_init,
+	pro_curses_screen_close,
+	pro_curses_screen_title,
+	pro_curses_screen_update,
+	pro_curses_screen_reset,
+	pro_curses_scroll,
+
+	pro_curses_mapchange,
+	pro_curses_colormap_write
+};
+
+#endif /* HAS_CURSES */
 
 #endif
