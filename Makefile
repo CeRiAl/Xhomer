@@ -44,7 +44,7 @@ USE_BUILTIN_ROMS = Y
 
 # USE_LIMIT = Y
 
-USE_NCURSES = Y
+USE_CURSES = Y
 USE_SDL = Y
 USE_X = Y
 
@@ -77,8 +77,8 @@ CC += -ffloat-store
 
 # The 1st choice runs about 15% slower than the 2nd (-O3 -fomit-frame-pointer).
 # but it (re)compiles faster and unlike the second choice, it is debuggable.
-CC += -g -O0 -fno-inline
-#CC += -O3 -Winline -fomit-frame-pointer
+#CC += -g -O0 -fno-inline
+CC += -O3 -Winline -fomit-frame-pointer
 
 # Some older gcc's need this on i386 to work around a bug.  As long as
 # omit-frame-pointer is also set, it doesn't seem to hurt performance, so
@@ -120,13 +120,13 @@ ifeq ($(USE_BUILTIN_ROMS),Y)
 endif
 
 
-ifeq ($(USE_NCURSES),Y)
+ifeq ($(USE_CURSES),Y)
 #Mac#  CCINCS += 
 #Linux#  CCINCS += 
 #Cygwin#  CCINCS += -I/usr/include/ncurses
-  CCINCS += -I/usr/include/ncurses
+  CCINCS +=
   CCDEFS += -DHAS_CURSES
-#Mac#  CCLIBS = -lcurses -ltermcap
+#Mac#  CCLIBS = -lcurses
 #Linux#  CCLIBS = -lcurses -ltermcap
 #Cygwin#  CCLIBS = -lcurses
   CCLIBS = -lcurses
@@ -135,23 +135,23 @@ ifeq ($(USE_SDL),Y)
 #Mac#  CCINCS += -I/opt/local/include/SDL
 #Linux#  CCINCS += -I/usr/include/SDL
 #Cygwin#  CCINCS += -I/usr/local/include/SDL
-  CCINCS += -I/usr/local/include/SDL
+  CCINCS += -I/opt/local/include/SDL
 #Mac#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
 #Linux#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
 #Cygwin#  CCDEFS += -DHAS_SDL
-  CCDEFS += -DHAS_SDL
+  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
 #Mac#  CCLIBS += -L/opt/local/lib
 #Linux#  CCLIBS += 
 #Cygwin#  CCLIBS += -L/usr/local/lib
-  CCLIBS += -L/usr/local/lib
+  CCLIBS += -L/opt/local/lib
 #Mac#  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
 #Linux#  CCLINK += -lSDL -lpthread
 #Cygwin#  CCLINK += -lSDLmain -lSDL
-  CCLINK += -lSDLmain -lSDL
+  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
 #Mac#  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
 #Linux#  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
 #Cygwin#  CCLINKSTATIC += -lSDLmain -lSDL -luser32 -lgdi32 -lwinmm -ldxguid
-  CCLINKSTATIC += -lSDLmain -lSDL -luser32 -lgdi32 -lwinmm -ldxguid
+  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
 endif
 ifeq ($(USE_X),Y)
   X11DIR = /usr/X11R6

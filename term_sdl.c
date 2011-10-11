@@ -39,6 +39,7 @@
 
 #include "term_gfx.h"
 
+#define USE_OPENGL
 
 #define	PRO_KEYBOARD_FIFO_DEPTH	1024
 
@@ -273,7 +274,7 @@ void pro_sdl_overlay_init (int psize, int cmode, int bpixel, int wpixel)
     bmask = 0x00ff0000;
     amask = 0xff000000;
 #endif
-	  pro_sdl_overlay_data = SDL_CreateRGBSurface( (SDL_HWSURFACE | SDL_SRCALPHA), PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, rmask, gmask, bmask, amask);
+	  pro_sdl_overlay_data = SDL_CreateRGBSurface( (SDL_SWSURFACE | SDL_SRCALPHA), PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, rmask, gmask, bmask, amask);
 
 	  sdl_blackpixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 0, 0, 0, (255-PRO_OVERLAY_A));
 	  sdl_whitepixel = SDL_MapRGBA(pro_sdl_overlay_data->format, 255, 255, 255, 255);
@@ -534,7 +535,13 @@ char	window_pos_env[256];
 	  pro_screen_winheight = pro_screen_window_scale*pro_screen_bufheight;
 	  pro_screen_updateheight = PRO_VID_SCRHEIGHT;
 
-	  ProSDLScreen = SDL_SetVideoMode(PRO_VID_SCRWIDTH, pro_screen_winheight, 0, SDL_HWSURFACE);
+#ifdef USE_OPENGL
+	  SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+	  ProSDLScreen = SDL_SetVideoMode(PRO_VID_SCRWIDTH, pro_screen_winheight, 0, SDL_SWSURFACE | SDL_OPENGLBLIT);
+#else
+	  ProSDLScreen = SDL_SetVideoMode(PRO_VID_SCRWIDTH, pro_screen_winheight, 0, SDL_SWSURFACE);
+#endif
+
 	  ProSDLDepth = ProSDLScreen->format->BitsPerPixel;
 
 	  SDL_VERSION(&ProSDLWindow.version);
@@ -549,10 +556,16 @@ char	window_pos_env[256];
 	  pro_screen_title("Pro 350");
 
 	  // Create image buffer for screen updates
-	  pro_sdl_image = SDL_CreateRGBSurface( SDL_HWSURFACE, PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, 0, 0, 0, 0);
+	  pro_sdl_image = SDL_CreateRGBSurface( SDL_SWSURFACE, PRO_VID_SCRWIDTH, PRO_VID_SCRHEIGHT, ProSDLDepth, 0, 0, 0, 0);
 
+/*
+#ifdef USE_OPENGL
+	  SDL_UpdateRect(ProSDLScreen, 0, 0, 0, 0);
+	  SDL_GL_SwapBuffers();
+#else
 	  SDL_Flip(ProSDLScreen);
-
+#endif
+*/
 	  // Make emulator state consistent with keyboard state
 	  pro_sdl_screen_update_keys();
 
@@ -756,6 +769,7 @@ SDL_Rect sdl_srcrect;
 SDL_Rect sdl_dstrect;
 int sdl_color;
 int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
+int flip_needed = 0;
 
 	/* Service SDL events */
 
@@ -809,6 +823,7 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 
 	      if (pro_vid_mvalid[cmem(vindex)] == 0)
 	      {
+	      flip_needed = 1;
 	      if (pro_sdl_overlay_on == 0)
 	        for(i=0; i<(PRO_VID_CLS_PIX/16); i++)
 	          {
@@ -928,7 +943,14 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 	    }
 	  }
 
-	  SDL_Flip(ProSDLScreen);
+	  if (flip_needed == 1) {
+#ifdef USE_OPENGL
+		  SDL_UpdateRect(ProSDLScreen, 0, 0, 0, 0);
+		  SDL_GL_SwapBuffers();
+#else
+		  SDL_Flip(ProSDLScreen);
+#endif
+	  }
 	}
 
 	/* Check if title needs to be updated */
@@ -937,7 +959,6 @@ int sdl_bpp = pro_sdl_image->format->BytesPerPixel;
 	{
 	  title_needs_update = 0;
 	  SDL_WM_SetCaption(current_title, current_title);
-	  SDL_Flip(ProSDLScreen);
 	}
 }
 
@@ -947,8 +968,6 @@ void pro_sdl_keyboard_bell_vol (int vol)
 {
 	/* vol is in the range 0 (loudest) to 7 (softest) */
 //	pro_keyboard_control.bell_percent = (100*(7-vol))/7;
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
@@ -956,8 +975,6 @@ void pro_sdl_keyboard_bell_vol (int vol)
 void pro_sdl_keyboard_bell ()
 {
 //	XBell(ProDisplay, 0);
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
@@ -965,8 +982,6 @@ void pro_sdl_keyboard_bell ()
 void pro_sdl_keyboard_auto_off ()
 {
 //	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOff;
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
@@ -974,8 +989,6 @@ void pro_sdl_keyboard_auto_off ()
 void pro_sdl_keyboard_auto_on ()
 {
 //	pro_keyboard_control.auto_repeat_mode = AutoRepeatModeOn;
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
@@ -983,8 +996,6 @@ void pro_sdl_keyboard_auto_on ()
 void pro_sdl_keyboard_click_off ()
 {
 //	pro_keyboard_control.key_click_percent = 0;
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
@@ -992,8 +1003,6 @@ void pro_sdl_keyboard_click_off ()
 void pro_sdl_keyboard_click_on ()
 {
 //	pro_keyboard_control.key_click_percent = 100;
-
-	SDL_Flip(ProSDLScreen);
 }
 
 
