@@ -129,29 +129,29 @@ ifeq ($(USE_CURSES),Y)
 #Mac#  CCLIBS = -lcurses
 #Linux#  CCLIBS = -lcurses -ltermcap
 #Cygwin#  CCLIBS = -lcurses
-  CCLIBS = -lcurses
+  CCLIBS = -lcurses -ltermcap
 endif
 ifeq ($(USE_SDL),Y)
 #Mac#  CCINCS += -I/opt/local/include/SDL
 #Linux#  CCINCS += -I/usr/include/SDL
 #Cygwin#  CCINCS += -I/usr/local/include/SDL
-  CCINCS += -I/opt/local/include/SDL
+  CCINCS += -I/usr/include/SDL
 #Mac#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
 #Linux#  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
 #Cygwin#  CCDEFS += -DHAS_SDL
-  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_THREAD_SAFE
+  CCDEFS += -DHAS_SDL -D_GNU_SOURCE=1 -D_REENTRANT
 #Mac#  CCLIBS += -L/opt/local/lib
 #Linux#  CCLIBS += 
 #Cygwin#  CCLIBS += -L/usr/local/lib
-  CCLIBS += -L/opt/local/lib
+  CCLIBS += 
 #Mac#  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
 #Linux#  CCLINK += -lSDL -lpthread
 #Cygwin#  CCLINK += -lSDLmain -lSDL
-  CCLINK += -lSDLmain -lSDL -Wl,-framework,Cocoa
+  CCLINK += -lSDL -lpthread
 #Mac#  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
 #Linux#  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
 #Cygwin#  CCLINKSTATIC += -lSDLmain -lSDL -luser32 -lgdi32 -lwinmm -ldxguid
-  CCLINKSTATIC += /opt/local/lib/libSDLmain.a /opt/local/lib/libSDL.a -Wl,-framework,OpenGL -Wl,-framework,Cocoa -Wl,-framework,ApplicationServices -Wl,-framework,Carbon -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,IOKit
+  CCLINKSTATIC += -lSDL -lpthread -lm -ldl -lpthread
 endif
 ifeq ($(USE_X),Y)
   X11DIR = /usr/X11R6
