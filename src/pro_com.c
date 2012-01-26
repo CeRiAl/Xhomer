@@ -36,7 +36,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 
 LOCAL int pro_com_a_wr0;			/* control register A WR0 */

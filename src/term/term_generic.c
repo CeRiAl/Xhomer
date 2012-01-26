@@ -21,7 +21,7 @@
 
 #ifdef PRO
 
-#include "pro_defs.h"
+#include "../pro_defs.h"
 
 #include "term_gfx.h"
 

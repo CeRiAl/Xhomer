@@ -32,10 +32,10 @@
 #include <signal.h>
 #include <math.h>
 
-#include "pro_defs.h"
-#include "pro_lk201.h"
+#include "../pro_defs.h"
+#include "../pro_lk201.h"
 
-#include "pro_font.h"
+#include "../pro_font.h"
 
 #include "term_gfx.h"
 

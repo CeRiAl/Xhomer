@@ -50,8 +50,8 @@
 
 #include <curses.h>
 
-#include "pro_defs.h"
-#include "pro_lk201.h"
+#include "../pro_defs.h"
+#include "../pro_lk201.h"
 
 #include "term_gfx.h"
 

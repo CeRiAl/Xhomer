@@ -23,7 +23,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 
 /* Null code entry points */

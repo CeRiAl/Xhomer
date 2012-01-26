@@ -25,7 +25,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 #include "pro_lk201.h"
 
 #define	PRO_LK201_FIFO_DEPTH	1024

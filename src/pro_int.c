@@ -28,8 +28,8 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
-#include "sim_defs.h"			/* For sim_gtime() */
+#include "simh/pdp11_defs.h"
+#include "simh/sim_defs.h"			/* For sim_gtime() */
 
 extern int	int_req;		/* from pdp11_cpu */
 

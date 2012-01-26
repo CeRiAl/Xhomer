@@ -29,7 +29,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 #include "pro_lk201.h"
 
 #define MENU_X		24			/* x position of top of menu */

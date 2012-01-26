@@ -11,7 +11,7 @@
 #include "sim_defs.h"					/* simulator defns */
 #include <setjmp.h>
 #ifdef PRO
-#include "pro_defs.h"
+#include "../pro_defs.h"
 #endif
 
 /* Constants */

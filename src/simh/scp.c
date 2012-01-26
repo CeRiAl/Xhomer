@@ -41,7 +41,7 @@
 	x = sim_interval
 
 #ifdef PRO
-#include "pro_defs.h"
+#include "../pro_defs.h"
 #endif
 
 #ifdef HAS_SDL

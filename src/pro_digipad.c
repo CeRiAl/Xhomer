@@ -26,7 +26,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 #define	PRO_DIGIPAD_FIFO_DEPTH	1024
 

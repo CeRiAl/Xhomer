@@ -20,11 +20,11 @@
 
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "term_gfx.h"
+#include "term/term_gfx.h"
 
 #ifdef __hpux__
 #define seteuid(euid) setresuid(-1,(euid),-1)

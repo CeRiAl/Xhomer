@@ -29,7 +29,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 /* XXX make generic */
 

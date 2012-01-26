@@ -20,7 +20,7 @@
 
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 unsigned char PRO_EQ[PRO_EQ_SIZE];
 

@@ -28,7 +28,7 @@
 
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 int	pro_maint_mode = 0;	/* set to 1 if printer port is in maintenance mode */
 

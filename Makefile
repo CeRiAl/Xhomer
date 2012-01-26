@@ -98,8 +98,8 @@ CCLINKSTATIC = -static -ldl
 
 #########################
 # Files (base + graphics)
-SOURCES = $(shell /bin/ls pdp11*.c scp*.c pro*.c)
-SOURCES += term_generic.c term_curses.c term_sdl.c $(shell /bin/ls term*x11.c)
+SOURCES = $(shell /bin/ls src/simh/pdp11*.c src/simh/scp*.c src/pro*.c)
+SOURCES += src/term/term_generic.c src/term/term_curses.c src/term/term_sdl.c $(shell /bin/ls src/term/term*x11.c)
 
 
 # Some Pro features require extra libraries and defines
@@ -226,62 +226,34 @@ dep depend:
 
 ##############
 # Dependencies
-pdp11_cpu.o: pdp11_cpu.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pdp11_fp.o: pdp11_fp.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pdp11_sys.o: pdp11_sys.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_2661kb.o: pro_2661kb.c pdp11_defs.h sim_defs.h pro_defs.h \
-  pro_version.h pro_config.h
-pro_2661ptr.o: pro_2661ptr.c pdp11_defs.h sim_defs.h pro_defs.h \
-  pro_version.h pro_config.h
-pro_clk.o: pro_clk.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_com.o: pro_com.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_digipad.o: pro_digipad.c pdp11_defs.h sim_defs.h pro_defs.h \
-  pro_version.h pro_config.h
-pro_eq.o: pro_eq.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_init.o: pro_init.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_int.o: pro_int.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_kb.o: pro_kb.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_la50.o: pro_la50.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_lk201.o: pro_lk201.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h pro_lk201.h
-pro_maint.o: pro_maint.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_mem.o: pro_mem.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_menu.o: pro_menu.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h pro_lk201.h
-pro_null.o: pro_null.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_ptr.o: pro_ptr.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_rd.o: pro_rd.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_reg.o: pro_reg.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h id.h pro350.h
-pro_rx.o: pro_rx.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-pro_serial.o: pro_serial.c pdp11_defs.h sim_defs.h pro_defs.h \
-  pro_version.h pro_config.h
-pro_vid.o: pro_vid.c pdp11_defs.h sim_defs.h pro_defs.h pro_version.h \
-  pro_config.h
-scp.o: scp.c sim_defs.h pro_defs.h pro_version.h pro_config.h
-scp_tty.o: scp_tty.c sim_defs.h
-term_generic.o: term_generic.c pro_defs.h pro_version.h pro_config.h \
-  pro_lk201.h term_gfx.h
-term_curses.o: term_curses.c pro_defs.h pro_version.h pro_config.h \
-  pro_lk201.h  term_gfx.h
-term_x11.o: term_x11.c pro_defs.h pro_version.h pro_config.h pro_lk201.h \
-  term_gfx.h
-term_sdl.o: term_sdl.c pro_defs.h pro_version.h pro_config.h pro_lk201.h \
-  term_gfx.h
+pdp11_cpu.o: src/simh/pdp11_cpu.c src/simh/pdp11_defs.h src/simh/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pdp11_fp.o: src/simh/pdp11_fp.c src/simh/pdp11_defs.h src/simh/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pdp11_sys.o: src/simh/pdp11_sys.c src/simh/pdp11_defs.h src/simh/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_2661kb.o: src/pro_2661kb.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_2661ptr.o: src/pro_2661ptr.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_clk.o: src/pro_clk.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_com.o: src/pro_com.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_digipad.o: src/pro_digipad.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_eq.o: src/pro_eq.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_init.o: src/pro_init.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_int.o: src/pro_int.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_kb.o: src/pro_kb.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_la50.o: src/pro_la50.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_lk201.o: src/pro_lk201.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_lk201.h src/pro_config.h 
+pro_maint.o: src/pro_maint.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_mem.o: src/pro_mem.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_menu.o: src/pro_menu.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_lk201.h src/pro_config.h
+pro_null.o: src/pro_null.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_ptr.o: src/pro_ptr.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_rd.o: src/pro_rd.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_reg.o: src/pro_reg.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/id.h src/pro350.h src/pro_config.h
+pro_rx.o: src/pro_rx.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_serial.o: src/pro_serial.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+pro_vid.o: src/pro_vid.c src/pdp11_defs.h src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+scp.o: src/simh/scp.c src/sim_defs.h src/pro_defs.h src/pro_version.h src/pro_config.h
+scp_tty.o: src/simh/scp_tty.c src/sim_defs.h
+term_generic.o: src/term/term_generic.c src/term/term_gfx.h src/pro_defs.h src/pro_version.h src/pro_config.h src/pro_lk201.h
+term_curses.o: src/term/term_curses.c src/term/term_gfx.h src/pro_defs.h src/pro_version.h src/pro_lk201.h src/pro_config.h
+term_x11.o: src/term/term_x11.c src/term/term_gfx.h src/pro_defs.h src/pro_version.h src/pro_lk201.h src/pro_config.h
+term_sdl.o: src/term/term_sdl.c src/term/term_gfx.h src/pro_defs.h src/pro_version.h src/pro_lk201.h src/pro_config.h
   

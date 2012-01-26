@@ -24,7 +24,7 @@
 */
 
 #ifdef PRO
-#include "pdp11_defs.h"
+#include "simh/pdp11_defs.h"
 
 #define SIX_RPT		0x21
 #define SIX_NL		0x2d
