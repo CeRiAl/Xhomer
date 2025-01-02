@@ -251,13 +251,13 @@ saveit: pdp11
 	strip pdp11-$(TARGET)
 
 date:
-	make_version
+	./make_version
 	@echo -n "#define PRO_VERSION \"" > pro_version.h
 	@echo -n `cat VERSION` >> pro_version.h
 	@echo "\"" >> pro_version.h
 
 archive:
-	make_archive
+	./make_archive
 
 clean:
 	-@rm -f *.o *~ xhomer xhomer.static texthomer texthomer.static convert_roms

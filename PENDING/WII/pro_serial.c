@@ -200,10 +200,11 @@ const tcflag_t parity[] = {PARODD, 0};
 
 const tcflag_t penable[] = {0, PARENB};
 
-/* XXX 2000, 3600 and 7200 baud are implemented as 0 */
+/* XXX 2000 and 3600 baud are implemented as 0 */
+/* XXX 7200 baud is implemented as 115200 */
 
 const speed_t baud[] = {B50, B75, B110, B134, B150, B300, B600, B1200,
-	                B1800, B0, B2400, B0, B4800, B0, B9600, B19200};
+	                B1800, B0, B2400, B0, B4800, B115200, B9600, B19200};
 
 int	mlines;		/* modem lines */
 struct	termios	serpar;	/* serial port parameters */
@@ -251,10 +252,7 @@ void pro_serial_reset (int dev, int portnum)
 {
 	if (pro_ser_sfd[dev] == -1)
 	{
-	  /* O_NOCTTY is needed to ensure the pro serial port does
-	     not become a controlling tty device for xhomer itself. */                                                            
-
-	  pro_ser_sfd[dev] = open(pro_serial_devname[portnum], O_RDWR|O_NONBLOCK|O_NOCTTY);
+	  pro_ser_sfd[dev] = open(pro_serial_devname[portnum], O_RDWR|O_NONBLOCK);
 
 	  if (pro_ser_sfd[dev] == -1)
 	  {

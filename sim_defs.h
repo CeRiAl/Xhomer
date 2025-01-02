@@ -68,6 +68,7 @@ typedef int32		t_mtrlnt;			/* magtape rec lnt */
 */
 
 #define SCPE_OK		0				/* normal return */
+#define SCPE_PDP11_HALT	16
 #define SCPE_BASE	32				/* base for messages */
 #define SCPE_NXM	(SCPE_BASE + 0)			/* nxm */
 #define SCPE_UNATT	(SCPE_BASE + 1)			/* no file */

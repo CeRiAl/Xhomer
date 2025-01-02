@@ -16,8 +16,8 @@ CPU core from the <A HREF="http://simh.trailing-edge.com/">SIMH simulator</A>, a
 
 <a name=supported_platforms>
 <h2>Supported Platforms</h2>
-Xhomer is an X-windows application that was developed and tested on an x86 Linux system (Red
-Hat 8.0, most recently).  It will likely build and run on other Unix-like systems as well,
+Xhomer is an X-windows application that was developed and tested on an x86 Linux system
+(Ubuntu 20.04, most recently).  It will likely build and run on other Unix-like systems as well,
 possibly requiring minor tweaks to the Makefile.  In addition to the source, a completely
 statically-linked x86 Linux binary is provided.
 
@@ -31,16 +31,17 @@ only) and gunzip the disk image in the same directory (the latter expands to abo
   gunzip -dc xhomer.static.tgz | tar xvf -
   gunzip pos32.rd.gz
 
-Next, simply run "xhomer.static."  To exit Xhomer, make sure the emulator window has focus,
-then press ctrl-F1, and select the "Shutdown emulator" option.
+Next, simply run "xhomer.static."  Note that this static binary is an older version of Xhomer (9-16-06) To exit Xhomer,
+make sure the emulator window has focus, then press ctrl-F1, and select the "Shutdown emulator" option.
 
 <a name=download>
 <h2>Download</h2>
-<A HREF="xhomer-12-14-03.tgz">Xhomer source</A> (version 12-14-03)
-  (filesize: 312166 md5sum: 7eab258f5a130be9950c2032a9e10946)
+<A HREF="xhomer-2-19-24.tgz">Xhomer source</A> (version 2-19-24)
+  (filesize: TBD md5sum: TBD)
+  (all of the documentation from this web site is included in DOC/index.html)
 
 <A HREF="xhomer.static.tgz">Xhomer statically-linked x86 Linux binary</A> (same file as in "Quick Start")
-  (filesize: 665086 md5sum: 7dac40198073f476a384390f9f39006f)
+  (filesize: 665290 md5sum: 5faa59552c9de4eba50c55497b743afe)
 
 <A HREF="pos32.rd.gz">P/OS 3.2 hard disk image</A> (same file as in "Quick Start")
   (filesize: 3789644 md5sum: a611327714417d9b629cd20e540ce974 - uncompresses to 67 MB)
@@ -51,8 +52,18 @@ then press ctrl-F1, and select the "Shutdown emulator" option.
   (log in as user "root" for a shell, or as user "demo" to see the graphics demo -
   neither account has a password)
 
+<A HREF="rt11v53.rd.tgz">RT-11 V5.3 hard disk image</A>
+  (filesize: 1022425 md5sum: ce604ff437514808f820f93d33639167 - uncompresses to 33 MB)
+  (use "gunzip -dc rt11v53.rd.tgz | tar xvf -" to extract the disk image - please
+  read the license files included in this particular archive)
+
+<A HREF="29bsd_128m.rd.gz">2.9 BSD hard disk image</A>
+  (filesize: 4077129 md5sum: 7414500643160d59ea27231d8c83da2a - uncompresses to 134217728 bytes)
+  (log in as user "root" with password "xhomer")
+
 <A HREF="pos32_install_floppies.tgz">P/OS 3.2 installation floppy disk images</A>
   (filesize: 2955387 md5sum: 25afdae87f37469e9f5cac088fda81dd)
+  (these are only needed to build a new P/OS hard disk image from scratch)
 
 (Caution: Some web browsers might remove the ".gz" extension from the disk image filenames, without
 actually decompressing them.  If this happens, add the ".gz" extension back manually before running
@@ -61,10 +72,10 @@ gunzip.)
 <A NAME=feedback>
 <h2>Feedback</h2>
 Feedback, questions, bug reports, patches, etc. are always welcome.  Also, I would be very
-interested in hearing whether anyone is able to run other operating systems (2.9BSD, RT-11?).
+interested in hearing whether anyone is able to run other operating systems.
 Please contact me at the address below.
 <hr>                      
-Last updated 12-14-03 by Tarik Isani <img src="contact.gif">
+Last updated 2-19-24 by Tarik Isani <img src="contact.gif">
 </pre>
 </body>
 </HTML>

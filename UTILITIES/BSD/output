@@ -1,0 +1,161 @@
+
+Generating files for: rd50
+
+Disk geometry:
+
+  Cylinders: 153 Heads: 4 Sectors: 16
+
+  rd.c patch: 10 00 04 00 40 00 98 00
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     4480     1  /dev/rd0a  (mkfs /dev/rd0a 2240)
+     1920    71  /dev/rd0b  (Max. swap 960 KB)
+     3264   101  /dev/rd0c  (mkfs /dev/rd0c 1632)
+
+  ioconf.c patch: 00 00 80 11 01 00 00 00 80 07 47 00 00 00 c0 0c 65 00
+
+Disk image size: 5013504 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: rd51
+
+Disk geometry:
+
+  Cylinders: 306 Heads: 4 Sectors: 16
+
+  rd.c patch: 10 00 04 00 40 00 31 01
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     4480     1  /dev/rd0a  (mkfs /dev/rd0a 2240)
+     1920    71  /dev/rd0b  (Max. swap 960 KB)
+    13056   101  /dev/rd0c  (mkfs /dev/rd0c 6528)
+
+  ioconf.c patch: 00 00 80 11 01 00 00 00 80 07 47 00 00 00 00 33 65 00
+
+Disk image size: 10027008 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: rd31
+
+Disk geometry:
+
+  Cylinders: 615 Heads: 4 Sectors: 16
+
+  rd.c patch: 10 00 04 00 40 00 66 02
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     4480     1  /dev/rd0a  (mkfs /dev/rd0a 2240)
+     1920    71  /dev/rd0b  (Max. swap 960 KB)
+    32832   101  /dev/rd0c  (mkfs /dev/rd0c 16416)
+
+  ioconf.c patch: 00 00 80 11 01 00 00 00 80 07 47 00 00 00 40 80 65 00
+
+Disk image size: 20152320 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: rd52
+
+Disk geometry:
+
+  Cylinders: 512 Heads: 8 Sectors: 16
+
+  rd.c patch: 10 00 08 00 80 00 ff 01
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     8960     1  /dev/rd0a  (mkfs /dev/rd0a 4480)
+     3840    71  /dev/rd0b  (Max. swap 1920 KB)
+    52480   101  /dev/rd0c  (mkfs /dev/rd0c 26240)
+
+  ioconf.c patch: 00 00 00 23 01 00 00 00 00 0f 47 00 00 00 00 cd 65 00
+
+Disk image size: 33554432 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: rd32
+
+Disk geometry:
+
+  Cylinders: 820 Heads: 6 Sectors: 16
+
+  rd.c patch: 10 00 06 00 60 00 33 03
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     6720     1  /dev/rd0a  (mkfs /dev/rd0a 3360)
+     2880    71  /dev/rd0b  (Max. swap 1440 KB)
+    68928   101  /dev/rd0c  (mkfs /dev/rd0c 34464)
+
+  ioconf.c patch: 00 00 40 1a 01 00 00 00 40 0b 47 00 01 00 40 0d 65 00
+
+Disk image size: 40304640 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: rd53
+
+Disk geometry:
+
+  Cylinders: 1024 Heads: 8 Sectors: 16
+
+  rd.c patch: 10 00 08 00 80 00 ff 03
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+     8960     1  /dev/rd0a  (mkfs /dev/rd0a 4480)
+     3840    71  /dev/rd0b  (Max. swap 1920 KB)
+   118016   101  /dev/rd0c  (mkfs /dev/rd0c 59008)
+
+  ioconf.c patch: 00 00 00 23 01 00 00 00 00 0f 47 00 01 00 00 cd 65 00
+
+Disk image size: 67108864 bytes
+
+-----------------------------------------------------------------------------------
+
+
+Generating files for: 128m
+
+Disk geometry:
+
+  Cylinders: 1024 Heads: 8 Sectors: 32
+
+  rd.c patch: 20 00 08 00 00 01 ff 03
+
+Partition table:
+
+  Sectors  Cyl.  Partition  Notes
+  -------  ----  ---------  -----
+    17920     1  /dev/rd0a  (mkfs /dev/rd0a 8960)
+     7680    71  /dev/rd0b  (Max. swap 3840 KB)
+   236032   101  /dev/rd0c  (mkfs /dev/rd0c 118016)
+
+  ioconf.c patch: 00 00 00 46 01 00 00 00 00 1e 47 00 03 00 00 9a 65 00
+
+Disk image size: 134217728 bytes
+
+-----------------------------------------------------------------------------------
+

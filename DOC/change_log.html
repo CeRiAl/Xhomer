@@ -9,6 +9,24 @@
 <body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
 <pre>
 <h2>Change Log</h2>
+2-19-24:
+
+  -Added documentation and disk image for running 2.9BSD
+
+  -Fixed DIV bug in pdp11_cpu.c
+
+  -Added NO_OCTTY to serial port open
+
+  -Added patch scripts for 2.9 BSD installation floppy
+
+  -Added max 128 mb disk geometry auto detection to pro_rd.c
+
+  -scp now works when no terminal is connected
+
+  -xhomer.static is currently not supported for new builds (web site contains old 9-16-06 build)
+
+  -Added exit_on_halt option for xhomer.cfg (in support of "reboot -h" for 2.9 BSD)
+
 9-16-06:
 
   -Removed bits 0..2 of MMR3, to match the F11 more closely.

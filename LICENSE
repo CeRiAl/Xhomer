@@ -18,8 +18,8 @@ include:
 The second set of files is an original work.  They are covered
 by a different license, namely the GNU General Public License.
 Please see the file COPYING, also in this distribution, for a
-description of this license.  The files that this license applies
-to include:
+description of this license.  A partial list of the files that
+this license applies to is as follows:
 
   pro_2661kb.c
   pro_2661ptr.c

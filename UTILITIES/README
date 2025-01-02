@@ -1,0 +1,6 @@
+convert_roms.c		Converts ROM images to C header files
+lbn2xhomer.c		Converts RX50 floppy image in logical block number format to Xhomer raw format
+venix2xhomer.c		Reverses sector interleave used bu Venix
+BSD/patch_kernel	Generates installation floppy images for installing 2.9BSD, based on specified
+			RD disk geometry - supports maximum of 1024 cyl., 8 heads and 32 sectors (128 MB)
+BSD/patch_kernels	Runs patch_kernel for set of standard disk geometries

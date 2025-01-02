@@ -538,6 +538,7 @@ GLOBAL int pro_la50device_port;
 GLOBAL int pro_kb_port;
 GLOBAL int pro_ptr_port;
 GLOBAL int pro_com_port;
+GLOBAL int pro_exit_on_halt;
 GLOBAL void pro_reset(void);
 GLOBAL void pro_exit(void);
 

@@ -1,0 +1,356 @@
+<HTML>
+<HEAD>
+  <STYLE type="text/css">
+    <!--
+    A { text-decoration:none }
+    -->
+  </STYLE>
+</HEAD>
+<body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080" alink="#ff0000">
+<h1>Running 2.9 BSD on Xhomer</h1>
+<pre>
+Thanks in part to <A HREF="http://www.frijid.net/blog/?p=182">John Layman's detailed instructions</A>, I have produced a
+2.9 BSD hard disk image (<A HREF="29bsd_128m.rd.gz">29bsd_128m.rd.gz</A>) for Xhomer.
+
+Use the username "root" and password "xhomer" to log in.
+
+This hard disk image runs with a standard Xhomer emulator (e.g.
+version 2-19-24 from the Xhomer website).  However, I had difficulty
+creating the image with the standard Xhomer version.  The problems
+I encountered seemed to vary according to the speed of the host
+system I ran Xhomer on.  On some systems, the installation boot floppy
+(e.g. maintenance1.dsk) would appear to hang during the boot process.
+On other systems, the boot floppy would boot fully, but processes
+(e.g. ls, restor) would die at random points, giving a "no more children"
+error message.  I do not have a proper solution to the problem.
+However, given that the issue seemed to be related to timing,
+rather than to functional aspects of the emulator, I played around
+with various methods of slowing the emulator down, from the perspective
+of BSD.  Eventually, I believe it is the following set of modifications
+to Xhomer which resulted in an emulator which was able to boot the
+BSD installation floppy and build a hard disk image:
+
+1. I turned off RTC mode in the Makefile
+
+   (This results in fewer emulated instructions between timer
+   interrupts)
+
+2. I turned on IOTRACE mode in the Makefile
+
+   (This very quickly generates a huge log of every register
+   access performed.  It also has the side-effect of changing
+   the timing behavior of emulated interactions with real
+   hardware (e.g. the floppy subsystem).
+
+Interestingly, the disk image which was built using this method
+appears to run fine on a stock Xhomer.  It does not exhibit any of
+the issues seen with the installatin floppy.
+
+The following additional files (over the stock 2.9BSD Pro distribution)
+have been added to this disk image:
+
+/bin/rx2f
+/bin/f2rx
+/bin/tar
+
+</pre>
+<h1>Transferring Files into BSD</h1>
+<pre>
+The following are instructions for a somewhat crude method of
+getting a file from an external host (e.g. a Linux system) into
+a 2.9BSD system running on a DEC Pro/350.
+
+This method involves converting an arbitrary file (up to 400,000
+bytes in length) into a raw RX50 disk image (no file system) and
+then extracting the file from the raw disk on the Pro/350.  This
+method has been tested with the Xhomer emulator, but it should
+work on a real system as well.
+
+On the Linux host, a script called f2rximg converts the file to a
+disk image.  On BSD (on the Pro), an executable called rx2f extracts
+the file from the disk image.
+
+(NOTE: Steps 3-5, below, are not necessary if using the above-referenced
+29bsd_128m.rd image on Xhomer as it already has the rx2f binary installed
+in /bin)
+
+1. Ensure that the following files are present on the Linux host,
+   in their own directory (the script creates and deletes some
+   temporary files):
+
+   <A HREF="f2rximg">f2rximg</A> (make sure it is executable)
+   <A HREF="rx2f.c">rx2f.c</A>
+   <A HREF="lbn2xhomer.c">lbn2xhomer.c</A>
+
+2. Build lbn2xhomer:
+
+   On Linux host: cc -o lbn2xhomer lbn2xhomer.c
+
+3. Convert rx2f.c to disk image format:
+
+   On Linux host: ./f2rximg rx2f.c
+
+   (produces rx2f.c.dsk)
+
+4. Transfer rx2f.c to BSD system:
+
+   A. Attach rx2f.c.dsk to rx0 (on Xhomer)
+
+	OR
+
+   A. Write rx2f.c to real RX50 floppy and insert into
+      first floppy drive (on real Pro)
+
+   B. On BSD: dd if=/dev/r50 of=rx2f.c skip=18 bs=1 count=891
+
+5. Compile rx2f.c on BSD
+
+   On BSD: cc -o rx2f rx2f.c
+
+Once these steps have been completed, perform the following to
+transfer individual files, one at a time:
+
+1. Convert FILE to disk image format:
+
+   On Linux host: ./f2rximg FILE
+
+2. Attach floppy image to BSD system:
+
+   Attach FILE.dsk to rx0 (on Xhomer)
+
+   Or, write FILE.dsk to real RX50 and insert into floppy drive (on real Pro)
+
+3. Exract file from floppy image:
+
+   On BSD: rx2f
+
+That's it!  For now, to transfer files larger than 400,000 bytes, I
+suggest splitting them into smaller chunks, transferring the chunks
+individually and then reassembling them on BSD with cat.
+
+It is also possible to combine multiple files into a tar archive and
+then to transfer them as a single file, using this technique.  However,
+the standard Pro/350 distribution does not include a tar executable.
+See below ("Adding Additional Components") for a way to add tar.
+Or, download the tar binary directly from <A HREF="tar">here</A> and install
+it using rx2f.  (Note: /bin/tar has been added to the hard disk image
+referenced above)
+
+</pre>
+<h1>Building G-Kermit on BSD</h1>
+<pre>
+The rx2f method of getting files into BSD is only intended to be a
+temporary measure until a more functional file transfer program can
+be built natively.  To that end, I have tried to build <A HREF="http://www.columbia.edu/kermit/gkermit.html">G-Kermit</A>,
+but I have not been successful yet.
+
+I have tried building with "make bsd" and "make bsd211." The first
+problem is that cc seems to have a problem with "unsigned char" data
+types.
+
+</pre>
+<h1>Adding Additional Components</h1>
+<pre>
+The Pro/350 2.9BSD distribution is somewhat stripped down.
+Additional components of the operating system may be pulled from the
+following more general 2.9BSD distribution:
+
+<A HREF="http://www.tuhs.org/Archive/PDP-11/Distributions/ucb/2.9BSD/">http://www.tuhs.org/Archive/PDP-11/Distributions/ucb/2.9BSD/</A>
+
+Please see the files root.tar.gz and usr.tar.gz.  For example, I pulled
+a tar binary from /bin in root.tar.gz and transferred it into the Pro's
+BSD system using the rx2f method described above.
+</pre>
+<h1>Issues</h1>
+<pre>
+1. Shutting down BSD
+
+   Preferred option is "reboot -h" (And, if exit_on_halt is enabled
+   in xhomer.cfg, then Xhomer will exit fully as well)
+
+2. Setting the timezone
+
+   The time zone seems to be set to EDT and I have not found where to change this.
+</pre>
+<h1>Other Resources</h1>
+<pre>
+<A HREF="http://minnie.tuhs.org/PUPS/Setup/2.9bsd_setup.html">BSD installation and configuration</A>
+</pre>
+<h1>Using Larger Hard Drives</h1>
+<pre>
+The standard 2.9BSD distribution for the Pro/350 understands only RD50 (5 MB)
+and RD51 (10 MB) disks.  To support larger drives, several items need to be
+changed.  The complete set of changes is not necessarily fully understood at
+this point.  However, at a minimum, the following are affected:
+
+Unix kernel:
+
+1. The disk geometry table in rd.c must be updated to understand the correct
+   cylinders/heads/sectors parameters.
+
+2. The partition table in ioconf.c must be updated to specify the new size of
+   the /dev/rd0c (/usr) partition.
+
+Additional items:
+
+1. The standalone rdfmt needs to understand the new disk geometry.
+
+2. An appropriate version of /rdboot must be used (accounting for the correct
+   number of disk heads)
+
+3. /boot must be patched to understand the new disk geometry and the boot
+   command line (rd(0,64)unix) must be updated to specify the correct offset
+   (64, 96 or 128, for 4-, 6- or 8-head disks, repsectively).
+
+There are actually two Unix kernels which come into play and both
+need to be updated.  The first is the kernel on the installation floppy
+(maintenance1.dsk).  The other is the hard disk kernel itself.
+
+In this section, I show a technique for applying these changes by patching binaries,
+rather than by recompiling from source.  I have written a script which automates
+the patching process.  One needs only to specify the number of cylinders, heads,
+sectors, number of root partition cylinders and number of swap partition cylinders
+for a given disk and the script performs the necessary binary patches.
+
+To perform patching, download the following:
+
+   <A HREF="patch_kernel">patch_kernel</A> (make sure it is executable)
+   <A HREF="patch_kernels">patch_kernels</A> (make sure it is executable - produces mutliple patched kernel images)
+   <A HREF="unix">unix</A>
+   <A HREF="maintenance1.dsk">maintenance1.dsk</A> (The only change I made was to add a /mnt2 mount point)
+   <A HREF="kernel.dsk">kernel.dsk</A>
+
+Execute the following: (this example is for an rd31)
+
+  ./patch_kernel rd31 615 4 16 70 30
+
+In this case, the script produces the following output:
+
+  unix.rd31 (patched RD kernel - not needed in the following instructions)
+  maintenance1_rd31.dsk (replacement installation floppy image)
+  kernel_rd31.dsk (Unix file system floppy image with RD kernel)
+
+Additionally, when the script runs, it prints various status information.  This
+includes the size of the total hard drive in bytes (relevant if making an RD
+image for Xhomer) and the size of /dev/rd0c in blocks (needed for the mkfs stage
+of the installation process).
+
+Alternatively, if you are only interested in the rd31, rd32, rd53, or 128 MB
+patched binaries, pre-generated floppy images are available:
+
+   <A HREF="maintenance1_rd31.dsk">maintenance1_rd31.dsk</A>
+   <A HREF="kernel_rd31.dsk">kernel_rd31.dsk</A>
+
+   <A HREF="maintenance1_rd32.dsk">maintenance1_rd32.dsk</A>
+   <A HREF="kernel_rd32.dsk">kernel_rd32.dsk</A>
+
+   <A HREF="maintenance1_rd53.dsk">maintenance1_rd53.dsk</A>
+   <A HREF="kernel_rd53.dsk">kernel_rd53.dsk</A>
+
+   <A HREF="maintenance1_128m.dsk">maintenance1_128m.dsk</A>
+   <A HREF="kernel_128m.dsk">kernel_128m.dsk</A>
+
+The script "patch_kernels" calls "patch_kernel" multiple times, generating images
+for RD50, RD51, RD31, RD52, RD32, RD53, as well as a hypothetical 128 MB disk.
+
+To use this technique on an RD31 (20 MB), the following slightly modified process may be
+used: (modify these steps as needed for other disk sizes)
+
+  1. ./patch_kernel rd31 615 4 16 70 30
+
+  2. Note the size of the total disk image (20152320 bytes for an RD31).
+
+  3. Note the number of blocks in /dev/rd0c (16416 for an RD31)
+
+  4. If installing on real hardware, then create floppies from:
+
+     A. maintenance1_rd31.dsk
+
+     B. kernel_rd31.dsk
+
+     If running on Xhomer, save these images.
+
+  5. Boot maintenance1_rd31.dsk on the maintenance console.  The following
+     commands are typed on the maintenance console.
+
+  6. r5(0,0)rdfmt
+
+     Type 0 and press return.  Wait for the disk to format.
+
+  7. r5(0,0)unix
+
+  8. /etc/mkfs /dev/rrd0a 2240
+
+     (For a 70-cylinder root partition, this would be 2240, 3360 or 4480 for 4-head,
+     6-head ot 8-head disks, respectively)
+
+  9. /etc/mkfs /dev/rrd0c 16416
+
+     (Adjust this number for disks other than RD31)
+
+  10. Insert first root floppy in the second floppy drive and restore the root filesystem:
+
+      restor rf /dev/r51 /dev/rrd0a
+
+      (Follow instructions and cycle through all disks)
+
+  11. Insert first usr floppy in the second floppy drive and restore the usr filesystem:
+
+      restor rf /dev/r51 /dev/rrd0c
+
+      (Follow instructions and cycle through all disks)
+
+  12. Insert kernel_rd31.dsk into second floppy drive.
+
+  13. Replace kernel, boot and rdboot on root partition with patched versions:
+
+      /etc/mount /dev/r51 /mnt
+      /etc/mount /dev/rd0a /mnt2
+      cp /mnt/unix /mnt/boot /mnt/rdboot /mnt2
+
+  14. (Optional) Copy rx2f and tar binaries to hard disk:
+
+      cp /mnt/rx2f /mnt/tar /mnt2/bin
+
+  15. /etc/umount /dev/r51
+
+  16. /etc/umount /dev/rd0a
+
+  17. sync; sync
+
+  18. Cycle power
+
+  19. When the boot prompt reappears on the maintenance terminal:
+
+      rd(0,X)unix (where "X" is 64, 96 or 128, for 4-, 6- or 8-head disks, respectively)
+
+  20. The following are typed on the Pro console:
+
+  21. dd if=/rdboot of=/dev/rrd0h count=16
+
+      (NOTE: rdboot is actually 17 concatenated copies of the 512-byte boot sector.
+      The original instructions specify writing all 17 sectors to the disk.  However, this
+      causes the first sector of /dev/rrd0a to be overwritten.  By writing only 16 sectors,
+      every sector on cylinder 0 ends up with a copy of the boot sector)
+
+  22. passwd root
+
+      (Enter root password)
+
+  23. reboot -h
+
+      (Cycle power when machine halts, having removed all floppies and having disconnected
+      the maintenance terminal)
+
+  24. If all went well, the Pro should boot BSD directly from the hard drive.
+
+      (Note: On Xhomer, following a fresh installation, I get filesystem consistency problems
+      when I create and delete large files.  After several passes of filling the disk completely,
+      running fsck, erasing the new files and runnign fsck again, eventually, the problems
+      clear up and the filesystem stays clean)
+
+Also, see the bottom of the first section (above) for a pre-built Xhomer image for a
+hypothetical 128 MB disk.
+</pre>
+</body>
+</HTML>

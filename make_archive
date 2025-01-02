@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 PRO_VERSION=`cat VERSION`
 TMP_DIR=/tmp/XHOMER_ARCHIVE_TMP
 

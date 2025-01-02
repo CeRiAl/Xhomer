@@ -2191,7 +2191,7 @@ case 007:
 		if (GET_SIGN_W (src2)) src2 = src2 | ~077777;
 		if (GET_SIGN_W (R[srcspec])) src = src | ~017777777777;
 		dst = src / src2;
-		if ((dst >= 077777) || (dst < -0100000)) {
+		if ((dst > 077777) || (dst < -0100000)) {
 			V = 1;
 			C = 0;
 			break;  }

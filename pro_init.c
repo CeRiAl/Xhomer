@@ -45,6 +45,7 @@ int	pro_kb_port;
 int	pro_ptr_port;
 int	pro_com_port;
 
+int	pro_exit_on_halt = 1;
 
 #ifdef TRACE
 /* PC Trace */
@@ -669,6 +670,16 @@ char		*strtmp;
 	            pro_screen_pcm = 0;
 	          else if (scmp(strv[0], "on", -1, 1, 1, 1) > -1)
 	            pro_screen_pcm = 1;
+	          else
+	            error = 1;
+		}
+
+		else if (scmp(stra, "exit_on_halt", -1, 1, 1, numpar) > -1)
+		{
+	          if (scmp(strv[0], "off", -1, 1, 1, 1) > -1)
+	            pro_exit_on_halt = 0;
+	          else if (scmp(strv[0], "on", -1, 1, 1, 1) > -1)
+	            pro_exit_on_halt = 1;
 	          else
 	            error = 1;
 		}

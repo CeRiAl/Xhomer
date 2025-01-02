@@ -1,0 +1,53 @@
+#!/bin/bash
+
+/* f2rximg: Convert file to raw RX50 disk image
+
+   Copyright (c) 1997-2024, Tarik Isani (xhomer@isani.org)
+
+   This file is part of Xhomer.
+
+   Xhomer is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License version 2 
+   as published by the Free Software Foundation.
+
+   Xhomer is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with Xhomer; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+
+# This script converts a file (up to 400,000 bytes)
+# into a raw RX50 disk image for transfer into 2.9BSD
+#
+# Invoke with:
+#
+#    f2rx filename
+#
+# Output:
+#
+#    filename.dsk (409,600 bytes)
+
+FILE=$1
+
+FSIZE=`wc -c ${FILE} | cut -d' ' -f1`
+
+if [ ${FSIZE} -gt 400000 ]
+then
+  echo "Maximum supported file size is 400,000 bytes - please split the file"
+  exit
+fi
+
+FSIZE_TXT=`printf "%010d" ${FSIZE}`
+
+dd if=/dev/zero of=zero bs=409600 count=1 >& /dev/null
+echo ${FSIZE_TXT} ${FILE} > header
+cat header ${FILE} zero > f1
+dd if=f1 of=f2 bs=409600 count=1 >& /dev/null
+./lbn2xhomer f2 ${FILE}.dsk
+
+rm f1 f2 header zero

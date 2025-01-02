@@ -52,7 +52,7 @@ LOCAL int	pro_rd_status;
 
 /* Known hard drive geometries */
 
-#define NUMGEOM	12	/* number of defined geometries */
+#define NUMGEOM	13	/* number of defined geometries */
 
 LOCAL const int	pro_rd_geom[NUMGEOM][3] = {{4,  615, 16},	/* RD31 21M */
 	                                   {4,  615, 17},
@@ -65,7 +65,8 @@ LOCAL const int	pro_rd_geom[NUMGEOM][3] = {{4,  615, 16},	/* RD31 21M */
 	                                   {8,  512, 16},	/* RD52 36M */
 	                                   {8,  512, 17},
 	                                   {8, 1024, 16},	/* RD53 71M */
-	                                   {8, 1024, 17}};
+	                                   {8, 1024, 17},
+	                                   {8, 1024, 32}};	/* max 128 MB disk */
 
 
 /* Trigger interrupt A */

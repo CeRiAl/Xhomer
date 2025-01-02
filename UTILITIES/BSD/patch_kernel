@@ -1,0 +1,254 @@
+#!/bin/bash
+
+/* patchkernel: Patch 2.9 BSD kernel
+
+   Copyright (c) 1997-2024, Tarik Isani (xhomer@isani.org)
+
+   This file is part of Xhomer.
+
+   Xhomer is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License version 2 
+   as published by the Free Software Foundation.
+
+   Xhomer is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with Xhomer; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+
+# This script takes the following parameters and creates a patched
+# maintenance1.dsk floppy image and a patched RD kernel:
+#
+# patch_kernel disk_name cylinders heads sectors num_root_cyl num_swap_cyl
+#
+# Example: patch_kernel rd31 615 4 16 70 30
+
+# XXX Starting cylinder for rd0c must be <= 255 (can be fixed in script if needed)
+# XXX Warning: When updating kernel.dsk or maintenance1.dsk, one must ensure that the
+#     search strings (below) do not cross 512-byte sector boundaries.
+
+if [ "$#" -ne 6 ]; then
+  echo ""
+  echo "Usage: patch_kernel disk_name cylinders heads sectors root_cylinders swap_cylinders"
+  echo ""
+  echo "Example: patch_kernel rd31 615 4 16 70 30"
+  echo ""
+  exit
+fi
+
+NAME=$1
+
+C=$2
+
+H=$3
+
+S=$4
+
+RC=$5
+
+SC=$6
+
+UNIX=unix
+MAINT1=maintenance1
+KERNEL=kernel
+
+echo ""
+echo "Generating files for: ${NAME}"
+echo ""
+
+# Sectors per cylinder
+
+SPC=`expr $H \* $S`
+
+# Generate replacement CHS line for new disk geometry
+
+H_H=`printf "%02x" "$H"`
+
+S_H=`printf "%02x" "$S"`
+
+SPC_H=`printf "%02x" "$SPC"`
+
+SPC_B0=`expr ${SPC} % 256`
+SPC_B1=`expr ${SPC} / 256`
+
+SPC_B0_H=`printf "%02x" "$SPC_B0"`
+SPC_B1_H=`printf "%02x" "$SPC_B1"`
+
+C_M_1=`expr $C - 1`
+
+C_B0=`expr ${C_M_1} % 256`
+C_B1=`expr ${C_M_1} / 256`
+
+C_B0_H=`printf "%02x" "$C_B0"`
+C_B1_H=`printf "%02x" "$C_B1"`
+
+CHS="${S_H} 00 ${H_H} 00 ${SPC_B0_H} ${SPC_B1_H} ${C_B0_H} ${C_B1_H}"
+
+echo "Disk geometry:"
+echo ""
+echo "  Cylinders: $C Heads: $H Sectors: $S"
+echo ""
+echo "  rd.c patch: $CHS"
+echo ""
+
+# Generate partition table entries
+
+# Starting cylinder numbers
+
+SCYL_A=1
+SCYL_B=`expr ${SCYL_A} + ${RC}`
+SCYL_C=`expr ${SCYL_B} + ${SC}`
+
+SCYL_A_H=`printf "%02x" "${SCYL_A}"`
+SCYL_B_H=`printf "%02x" "${SCYL_B}"`
+SCYL_C_H=`printf "%02x" "${SCYL_C}"`
+
+# Blocks in rd0a
+
+BLOCKS_A=`expr $RC \* $SPC`
+
+BLOCKS_A_B0=`expr ${BLOCKS_A} % 256`
+BSHIFT=`expr ${BLOCKS_A} / 256`
+BLOCKS_A_B1=`expr ${BSHIFT} % 256`
+BSHIFT=`expr ${BSHIFT} / 256`
+BLOCKS_A_B2=`expr ${BSHIFT} % 256`
+BLOCKS_A_B3=`expr ${BSHIFT} / 256`
+
+BLOCKS_A_B0_H=`printf "%02x" "${BLOCKS_A_B0}"`
+BLOCKS_A_B1_H=`printf "%02x" "${BLOCKS_A_B1}"`
+BLOCKS_A_B2_H=`printf "%02x" "${BLOCKS_A_B2}"`
+BLOCKS_A_B3_H=`printf "%02x" "${BLOCKS_A_B3}"`
+
+BLOCKS_A_D_2=`expr ${BLOCKS_A} / 2`
+
+# Blocks in rd0b
+
+BLOCKS_B=`expr $SC \* $SPC`
+
+BLOCKS_B_B0=`expr ${BLOCKS_B} % 256`
+BSHIFT=`expr ${BLOCKS_B} / 256`
+BLOCKS_B_B1=`expr ${BSHIFT} % 256`
+BSHIFT=`expr ${BSHIFT} / 256`
+BLOCKS_B_B2=`expr ${BSHIFT} % 256`
+BLOCKS_B_B3=`expr ${BSHIFT} / 256`
+
+BLOCKS_B_B0_H=`printf "%02x" "${BLOCKS_B_B0}"`
+BLOCKS_B_B1_H=`printf "%02x" "${BLOCKS_B_B1}"`
+BLOCKS_B_B2_H=`printf "%02x" "${BLOCKS_B_B2}"`
+BLOCKS_B_B3_H=`printf "%02x" "${BLOCKS_B_B3}"`
+
+BLOCKS_B_D_2=`expr ${BLOCKS_B} / 2`
+
+# Blocks in rd0c
+
+# To calc. rd0c blocks: blocks = (cyl - num_root_cyl - num_swap_cyl - 2) * heads * sectors
+
+BLOCKS=`expr $C \* $SPC - ${SCYL_C} \* $SPC - $SPC`
+
+BLOCKS_B0=`expr ${BLOCKS} % 256`
+BSHIFT=`expr ${BLOCKS} / 256`
+BLOCKS_B1=`expr ${BSHIFT} % 256`
+BSHIFT=`expr ${BSHIFT} / 256`
+BLOCKS_B2=`expr ${BSHIFT} % 256`
+BLOCKS_B3=`expr ${BSHIFT} / 256`
+
+BLOCKS_B0_H=`printf "%02x" "${BLOCKS_B0}"`
+BLOCKS_B1_H=`printf "%02x" "${BLOCKS_B1}"`
+BLOCKS_B2_H=`printf "%02x" "${BLOCKS_B2}"`
+BLOCKS_B3_H=`printf "%02x" "${BLOCKS_B3}"`
+
+BLOCKS_D_2=`expr ${BLOCKS} / 2`
+
+IMAGE_SIZE=`expr $C \* $H \* $S \* 512`
+
+PTABLE_A="${BLOCKS_A_B2_H} ${BLOCKS_A_B3_H} ${BLOCKS_A_B0_H} ${BLOCKS_A_B1_H} ${SCYL_A_H} 00"
+
+PTABLE_B="${BLOCKS_B_B2_H} ${BLOCKS_B_B3_H} ${BLOCKS_B_B0_H} ${BLOCKS_B_B1_H} ${SCYL_B_H} 00"
+
+PTABLE_C="${BLOCKS_B2_H} ${BLOCKS_B3_H} ${BLOCKS_B0_H} ${BLOCKS_B1_H} ${SCYL_C_H} 00"
+
+PTABLE="${PTABLE_A} ${PTABLE_B} ${PTABLE_C}"
+
+echo "Partition table:"
+echo ""
+echo "  Sectors  Cyl.  Partition  Notes"
+echo "  -------  ----  ---------  -----"
+printf "   %6d  %4d  /dev/rd0a  (mkfs /dev/rd0a %d)\n" ${BLOCKS_A} ${SCYL_A} ${BLOCKS_A_D_2}
+printf "   %6d  %4d  /dev/rd0b  (Max. swap %d KB)\n" ${BLOCKS_B} ${SCYL_B} ${BLOCKS_B_D_2}
+printf "   %6d  %4d  /dev/rd0c  (mkfs /dev/rd0c %d)\n" ${BLOCKS} ${SCYL_C} ${BLOCKS_D_2}
+echo ""
+echo "  ioconf.c patch: $PTABLE"
+
+echo ""
+echo "Disk image size: ${IMAGE_SIZE} bytes"
+echo ""
+echo "-----------------------------------------------------------------------------------"
+echo ""
+
+# Patch maintenance1.dsk, kernel.dsk and unix
+
+CHS_ORIG="10 00 04 00 40 00 31 01 10 00 04 00 40 00 98 00"
+
+CHS_REPLACE="$CHS 00 00 00 00 00 00 00 00"
+
+PTABLE_ORIG="00 00 80 11 01 00 00 00 80 07 47 00 00 00 00 33 65 00 00 00 c0 0c 65 00"
+
+PTABLE_REPLACE="$PTABLE 00 00 00 00 00 00"
+
+# "RD51 - 0 or RD50 - 1"
+
+RDFMT_ORIG="52 44 35 31 20 2d 20 30 20 6f 72 20 52 44 35 30 20 2d 20 31"
+
+# " Enter 0 at prompt  "
+
+RDFMT_REPLACE="20 45 6e 74 65 72 20 30 20 61 74 20 70 72 6f 6d 70 74 20 20"
+
+# /rdboot patch to adjust cylinder size
+
+RDBOOT_ORIG_SPC="17 72 40 00 80 0a"
+
+RDBOOT_REPLACE_SPC="17 72 ${SPC_B0_H} ${SPC_B1_H} 80 0a"
+
+# /rdboot patch to adjust sectors per track
+
+RDBOOT_ORIG_S="17 72 10 00 1f 10"
+
+RDBOOT_REPLACE_S="17 72 ${S_H} 00 1f 10"
+
+# /boot patch to change boot offset
+
+# "rd(0,64)unix" (plus two null bytes)
+
+BOOT_ORIG="72 64 28 30 2c 36 34 29 75 6e 69 78 00 00"
+
+# "rd(0,xxx)unix" (plus one null byte) - xxx is cylinder offset (64, 96 or 128)
+
+SPC_D=`printf "%03d" "$SPC"`
+
+SPC_D_0=`expr ${SPC_D} % 10 + 48`
+BSHIFT=`expr ${SPC_D} / 10`
+SPC_D_1=`expr ${BSHIFT} % 10 + 48`
+SPC_D_2=`expr ${BSHIFT} / 10 + 48`
+
+SPC_D_0_H=`printf "%02x" "${SPC_D_0}"`
+SPC_D_1_H=`printf "%02x" "${SPC_D_1}"`
+SPC_D_2_H=`printf "%02x" "${SPC_D_2}"`
+
+BOOT_REPLACE="72 64 28 30 2c ${SPC_D_2_H} ${SPC_D_1_H} ${SPC_D_0_H} 29 75 6e 69 78 00"
+
+# Patch unix
+
+xxd -p $UNIX | fold -w2 | paste -sd' ' | sed "s/${CHS_ORIG}/${CHS_REPLACE}/g" | sed "s/${PTABLE_ORIG}/${PTABLE_REPLACE}/g" | xxd -p -r > ${UNIX}.${NAME}
+
+# Patch maintenance1.dsk
+
+xxd -p ${MAINT1}.dsk | fold -w2 | paste -sd' ' | sed "s/${CHS_ORIG}/${CHS_REPLACE}/g" | sed "s/${PTABLE_ORIG}/${PTABLE_REPLACE}/g" | sed "s/${RDFMT_ORIG}/${RDFMT_REPLACE}/g" | xxd -p -r > ${MAINT1}_${NAME}.dsk
+
+# Patch kernel.dsk
+
+xxd -p ${KERNEL}.dsk | fold -w2 | paste -sd' ' | sed "s/${CHS_ORIG}/${CHS_REPLACE}/g" | sed "s/${PTABLE_ORIG}/${PTABLE_REPLACE}/g" | sed "s/${RDBOOT_ORIG_SPC}/${RDBOOT_REPLACE_SPC}/g" | sed "s/${RDBOOT_ORIG_S}/${RDBOOT_REPLACE_S}/g" | sed "s/${BOOT_ORIG}/${BOOT_REPLACE}/g" | xxd -p -r > ${KERNEL}_${NAME}.dsk
